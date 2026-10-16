@@ -12,13 +12,11 @@ export function Footer() {
           {/* Brand Column */}
           <div className="figma-footer-brand-col">
             <Link to="/" className="figma-footer-logo-link" aria-label="LICHT Recruitment Services – Home">
-              <div className="figma-footer-badge">
-                <span>L</span>
-              </div>
-              <div className="figma-footer-logo-text">
-                <span className="figma-footer-title">LICHT</span>
-                <span className="figma-footer-sub">RECRUITMENT SERVICES</span>
-              </div>
+              <img 
+                src="/assets/recruitment_logo.png" 
+                alt="LICHT Recruitment Services Limited" 
+                className="figma-footer-logo-img"
+              />
             </Link>
 
             <p className="figma-footer-desc">

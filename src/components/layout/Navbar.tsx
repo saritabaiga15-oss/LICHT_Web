@@ -61,15 +61,13 @@ export function Navbar() {
     <>
       <header className={`navbar ${scrolled ? 'navbar--scrolled' : ''} ${mobileOpen ? 'navbar--open' : ''}`} role="banner">
         <nav className="navbar__inner container" aria-label="Main navigation">
-          {/* Exact Logo - Square Badge + Brand Typography */}
+          {/* Original Authentic Recruitment Logo */}
           <Link to="/" className="navbar__brand" aria-label="LICHT Recruitment Services – Home">
-            <div className="navbar__brand-badge">
-              <span>L</span>
-            </div>
-            <div className="navbar__brand-text">
-              <span className="navbar__brand-title">LICHT</span>
-              <span className="navbar__brand-sub">RECRUITMENT SERVICES</span>
-            </div>
+            <img 
+              src="/assets/recruitment_logo.png" 
+              alt="LICHT Recruitment Services Limited – Reliable People. Professional Recruitment." 
+              className="navbar__logo-img"
+            />
           </Link>
 
           {/* Desktop Nav */}
@@ -157,14 +155,13 @@ export function Navbar() {
         <div className="mobile-menu__inner">
           <nav aria-label="Mobile navigation">
             <div className="mobile-menu__header">
-              <Link to="/" className="navbar__brand" onClick={() => setMobileOpen(false)}>
-                <div className="navbar__brand-badge">
-                  <span>L</span>
-                </div>
-                <div className="navbar__brand-text">
-                  <span className="navbar__brand-title">LICHT</span>
-                  <span className="navbar__brand-sub">RECRUITMENT SERVICES</span>
-                </div>
+              <Link to="/" onClick={() => setMobileOpen(false)}>
+                <img 
+                  src="/assets/recruitment_logo.png" 
+                  alt="LICHT Recruitment Services Limited" 
+                  className="navbar__logo-img"
+                  style={{ height: '44px', width: 'auto' }}
+                />
               </Link>
             </div>
             <ul className="mobile-menu__links" role="list">

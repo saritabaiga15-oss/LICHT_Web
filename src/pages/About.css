@@ -1,53 +1,68 @@
+/* ===== LICHT RECRUITMENT - ABOUT PAGE (3-COLOR PALETTE SYSTEM) ===== */
+
+/* 1. Hero Section (Deep Teal #002F3A) */
 .about-hero {
-  background: radial-gradient(circle at 50% 30%, rgba(6, 70, 83, 0.5) 0%, var(--color-deep-teal) 85%);
-  padding: 5.5rem 0 4.5rem 0;
-  border-bottom: 1px solid var(--color-teal-border);
+  background-color: var(--color-deep-teal, #002F3A);
+  padding: 5.5rem 0 5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .about-hero-title {
-  font-size: 3rem;
-  font-weight: 800;
-  line-height: 1.2;
-  margin-bottom: 1.25rem;
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #FFFFFF;
+  letter-spacing: -0.025em;
+  margin-bottom: 1.5rem;
+  font-family: var(--font-heading);
 }
 
 .about-hero-lead {
-  font-size: 1.15rem;
-  color: var(--color-text-light-muted);
+  font-size: 1.2rem;
+  color: #CBD5E1;
   line-height: 1.65;
+  font-family: var(--font-body);
 }
 
-/* Intro Grid */
+/* 2. Intro Section (Pure White #FFFFFF) */
+.intro-section {
+  background-color: #FFFFFF;
+  padding: 6.5rem 0;
+}
+
 .intro-grid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
-  gap: 3.5rem;
+  gap: 4rem;
   align-items: center;
 }
 
 .intro-text-col h2 {
-  font-size: 2.25rem;
-  margin-bottom: 0.5rem;
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: #002F3A;
+  line-height: 1.2;
+  margin: 1rem 0 1.25rem 0;
+  font-family: var(--font-heading);
 }
 
 .intro-text-col p {
-  font-size: 1rem;
-  line-height: 1.65;
-  color: var(--color-text-light-muted);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: #475569;
   margin-bottom: 1.25rem;
 }
 
 .intro-image-wrapper {
   position: relative;
-  border-radius: var(--radius-xl);
+  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--color-teal-border);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
 }
 
 .intro-image {
   width: 100%;
-  height: 420px;
+  height: 440px;
   object-fit: cover;
 }
 
@@ -56,10 +71,10 @@
   bottom: 1.5rem;
   left: 1.5rem;
   right: 1.5rem;
-  background-color: rgba(0, 47, 58, 0.9);
+  background-color: rgba(0, 47, 58, 0.94);
   backdrop-filter: blur(8px);
-  border: 1px solid var(--color-royal-gold);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--color-royal-gold, #F5B82E);
+  border-radius: 6px;
   padding: 1rem 1.25rem;
   display: flex;
   align-items: center;
@@ -70,16 +85,23 @@
   display: block;
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--color-white);
+  color: #FFFFFF;
 }
 
 .stat-desc {
   display: block;
-  font-size: 0.8rem;
-  color: var(--color-text-light-muted);
+  font-size: 0.82rem;
+  color: #CBD5E1;
 }
 
-/* Mission & Vision */
+/* 3. Mission & Vision (Warm Ivory #FBF9F5 - 3rd Color Rule) */
+.mission-vision-section {
+  background-color: #FBF9F5;
+  padding: 6.5rem 0;
+  border-top: 1px solid #F1ECE1;
+  border-bottom: 1px solid #F1ECE1;
+}
+
 .mission-vision-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -87,25 +109,26 @@
 }
 
 .mv-card {
-  background-color: var(--color-deep-teal);
-  border: 1px solid var(--color-teal-border);
-  border-radius: var(--radius-xl);
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
   padding: 3rem 2.5rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  transition: all var(--transition-normal);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
 }
 
 .mv-card:hover {
-  border-color: var(--color-royal-gold);
+  border-color: var(--color-royal-gold, #F5B82E);
   transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 47, 58, 0.08);
 }
 
 .mv-icon-box {
-  width: 56px;
-  height: 56px;
-  background-color: rgba(6, 70, 83, 0.7);
-  border: 1px solid var(--color-royal-gold);
-  border-radius: var(--radius-md);
+  width: 54px;
+  height: 54px;
+  background-color: #F8FAFC;
+  border: 1px solid var(--color-royal-gold, #F5B82E);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -113,45 +136,57 @@
 }
 
 .mv-label {
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--color-royal-gold);
+  letter-spacing: 0.12em;
+  color: var(--color-royal-gold, #F5B82E);
+  text-transform: uppercase;
 }
 
 .mv-card h3 {
-  font-size: 1.6rem;
-  margin-top: 0.35rem;
-  margin-bottom: 0.5rem;
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #002F3A;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-family: var(--font-heading);
 }
 
 .mv-card p {
   font-size: 1.05rem;
   line-height: 1.65;
-  color: var(--color-text-light-muted);
+  color: #475569;
 }
 
-/* Values Grid */
+/* 4. Values Section (Pure White #FFFFFF) */
+.values-section {
+  background-color: #FFFFFF;
+  padding: 6.5rem 0;
+}
+
 .values-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.75rem;
+  gap: 2rem;
+  margin-top: 3rem;
 }
 
 .value-card {
-  background-color: var(--color-soft-teal);
-  border: 1px solid var(--color-teal-border);
-  border-radius: var(--radius-lg);
-  padding: 1.75rem;
+  background-color: #FBF9F5;
+  border: 1px solid #EFEAE0;
+  border-radius: 8px;
+  padding: 2rem;
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
-  transition: all var(--transition-normal);
+  gap: 1.25rem;
+  transition: all 0.2s ease;
 }
 
 .value-card:hover {
-  border-color: var(--color-royal-gold);
+  border-color: var(--color-royal-gold, #F5B82E);
+  background-color: #FFFFFF;
   transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 47, 58, 0.08);
 }
 
 .value-check-icon {
@@ -160,69 +195,128 @@
 }
 
 .value-title {
-  font-size: 1.15rem;
-  color: var(--color-white);
-  margin-bottom: 0.45rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #002F3A;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-heading);
 }
 
 .value-desc {
-  font-size: 0.88rem;
-  color: var(--color-text-light-muted);
-  line-height: 1.55;
+  font-size: 0.92rem;
+  color: #64748B;
+  line-height: 1.6;
 }
 
-/* Vetting Section */
+/* 5. Vetting & Standards (Warm Ivory #FBF9F5 - 3rd Color Rule) */
+.vetting-section {
+  background-color: #FBF9F5;
+  padding: 6.5rem 0;
+  border-top: 1px solid #F1ECE1;
+  border-bottom: 1px solid #F1ECE1;
+}
+
 .vetting-container {
   display: grid;
   grid-template-columns: 1.25fr 0.85fr;
-  gap: 3.5rem;
+  gap: 4rem;
   align-items: center;
+}
+
+.vetting-text h2 {
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: #002F3A;
+  margin: 1rem 0 1.25rem 0;
+  font-family: var(--font-heading);
+}
+
+.vetting-text p {
+  font-size: 1.05rem;
+  color: #475569;
+  line-height: 1.65;
 }
 
 .vetting-list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  gap: 1.15rem;
+  margin-top: 1.75rem;
 }
 
 .vetting-list li {
   display: flex;
   align-items: flex-start;
-  gap: 0.85rem;
-  font-size: 0.94rem;
-  color: var(--color-text-light);
-  line-height: 1.55;
-}
-
-.vetting-list strong {
-  color: var(--color-royal-gold);
-}
-
-.vetting-box-card {
-  background-color: var(--color-deep-teal);
-  border: 1px solid var(--color-royal-gold);
-  border-radius: var(--radius-xl);
-  padding: 2.75rem 2.25rem;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
-}
-
-.vetting-box-card h3 {
-  font-size: 1.45rem;
-  margin-bottom: 0.75rem;
-}
-
-.vetting-box-card p {
-  font-size: 0.92rem;
-  color: var(--color-text-light-muted);
+  gap: 1rem;
+  font-size: 0.98rem;
+  color: #334155;
   line-height: 1.6;
 }
 
+.vetting-list strong {
+  color: #002F3A;
+}
+
+.vetting-box-card {
+  background-color: var(--color-deep-teal, #002F3A);
+  border: 1px solid rgba(245, 184, 46, 0.3);
+  border-radius: 8px;
+  padding: 3rem 2.5rem;
+  color: #FFFFFF;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
+}
+
+.vetting-box-card h3 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 1rem;
+  font-family: var(--font-heading);
+}
+
+.vetting-box-card p {
+  font-size: 1rem;
+  color: #CBD5E1;
+  line-height: 1.65;
+}
+
+/* 6. Closing Section */
+.closing-section-dark {
+  background-color: var(--color-deep-teal, #002F3A);
+  color: #FFFFFF;
+  padding: 6.5rem 0;
+  text-align: center;
+}
+
+.closing-section-dark h2 {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 1.25rem;
+  font-family: var(--font-heading);
+}
+
+.closing-section-dark p {
+  font-size: 1.15rem;
+  color: #CBD5E1;
+  max-width: 700px;
+  margin: 0 auto 2.5rem auto;
+}
+
+.closing-btn-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+/* Responsive */
 @media (max-width: 1024px) {
   .intro-grid, .mission-vision-grid, .vetting-container {
     grid-template-columns: 1fr;
-    gap: 2.5rem;
+    gap: 3rem;
   }
   .values-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -230,8 +324,11 @@
 }
 
 @media (max-width: 640px) {
-  .about-hero-title {
-    font-size: 2.25rem;
+  .about-hero-title,
+  .intro-text-col h2,
+  .vetting-text h2,
+  .closing-section-dark h2 {
+    font-size: 2.2rem;
   }
   .values-grid {
     grid-template-columns: 1fr;

@@ -631,7 +631,84 @@ input, textarea, select {
 .mb-md { margin-bottom: var(--space-md); }
 .mb-lg { margin-bottom: var(--space-lg); }
 .mb-xl { margin-bottom: var(--space-xl); }
-.mb-2xl { margin-bottom: var(--space-2xl); }
+/* ===== 3-COLOR SYSTEM SECTIONS (Matching Homepage Palette) ===== */
+/* Rule: 60% Dominant (White/Ivory), 30% Structural (Deep Teal #002F3A), 10% Accent (Royal Gold #F5B82E) */
+
+.section {
+  padding: 5.5rem 0;
+  position: relative;
+}
+
+.section-white {
+  background-color: #FFFFFF;
+  color: #1E293B;
+}
+
+.section-ivory,
+.section-soft {
+  background-color: #FBF9F5;
+  color: #1E293B;
+  border-top: 1px solid #F1ECE1;
+  border-bottom: 1px solid #F1ECE1;
+}
+
+.section-dark {
+  background-color: var(--color-deep-teal, #002F3A);
+  color: #FFFFFF;
+}
+
+/* Light Section Typography Defaults */
+.section-white h2,
+.section-white h3,
+.section-white h4,
+.section-ivory h2,
+.section-ivory h3,
+.section-ivory h4,
+.section-soft h2,
+.section-soft h3,
+.section-soft h4 {
+  color: var(--color-deep-teal, #002F3A);
+  font-family: var(--font-heading);
+}
+
+.section-white p,
+.section-ivory p,
+.section-soft p {
+  color: #475569;
+}
+
+.section-white .section-title,
+.section-ivory .section-title,
+.section-soft .section-title {
+  color: var(--color-deep-teal, #002F3A);
+}
+
+.section-white .section-description,
+.section-ivory .section-description,
+.section-soft .section-description {
+  color: #475569;
+}
+
+/* Cards on Light/Ivory Surfaces */
+.section-ivory .card,
+.section-soft .card,
+.section-white .card,
+.card-light {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.section-ivory .card:hover,
+.section-soft .card:hover,
+.section-white .card:hover,
+.card-light:hover {
+  border-color: var(--color-royal-gold, #F5B82E);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 47, 58, 0.08);
+}
 
 /* ===== SHARED FIGMA DESIGN SYSTEM TOKENS & UTILITIES ===== */
 .hero-text-gold {

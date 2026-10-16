@@ -65,13 +65,15 @@ export const About: React.FC = () => {
         </div>
       </section>
 
-      {/* Company Introduction */}
-      <section className="section section-dark intro-section">
+      {/* Company Introduction - White (1st Rule) */}
+      <section className="section section-white intro-section">
         <div className="container intro-grid">
           <div className="intro-text-col">
-            <div className="eyebrow">WHO WE ARE</div>
+            <div className="figma-teal-eyebrow">
+              <span className="figma-teal-dash" />
+              <span>WHO WE ARE</span>
+            </div>
             <h2>Connecting Great People with Great Organisations</h2>
-            <div className="gold-line" />
             <p>
               LICHT RECRUITMENT SERVICES LIMITED was established to bridge the critical gap between organisations requiring dedicated, verified staffing solutions and qualified candidates seeking meaningful employment.
             </p>
@@ -102,16 +104,15 @@ export const About: React.FC = () => {
         </div>
       </section>
 
-      {/* Mission & Vision */}
-      <section className="section section-soft mission-vision-section">
+      {/* Mission & Vision - Warm Ivory (3rd Rule) */}
+      <section className="section section-ivory mission-vision-section">
         <div className="container mission-vision-grid">
           <div className="mv-card">
             <div className="mv-icon-box">
-              <Target size={28} className="gold-icon" />
+              <Target size={28} style={{ color: 'var(--color-royal-gold)' }} />
             </div>
             <span className="mv-label">OUR MISSION</span>
             <h3>Purposeful Recruitment Alignment</h3>
-            <div className="gold-line" />
             <p>
               To support organisations and candidates through a professional, transparent recruitment process focused on role requirements, clear communication, and suitable connections that endure.
             </p>
@@ -119,11 +120,10 @@ export const About: React.FC = () => {
 
           <div className="mv-card">
             <div className="mv-icon-box">
-              <Eye size={28} className="gold-icon" />
+              <Eye size={28} style={{ color: 'var(--color-royal-gold)' }} />
             </div>
             <span className="mv-label">OUR VISION</span>
             <h3>Trusted Long-Term Partnerships</h3>
-            <div className="gold-line" />
             <p>
               To build trusted recruitment relationships across care homes, healthcare, and corporate business by maintaining a consistent focus on professionalism, reliability, and human potential.
             </p>
@@ -131,13 +131,15 @@ export const About: React.FC = () => {
         </div>
       </section>
 
-      {/* Values */}
-      <section className="section section-dark values-section">
+      {/* Values - Pure White */}
+      <section className="section section-white values-section">
         <div className="container">
-          <div className="section-header-block text-center max-w-800">
-            <div className="eyebrow">OUR CORE PRINCIPLES</div>
+          <div className="section-header-block text-center max-w-800" style={{ margin: '0 auto 2.5rem auto' }}>
+            <div className="figma-teal-eyebrow center-eyebrow">
+              <span className="figma-teal-dash" />
+              <span>OUR CORE PRINCIPLES</span>
+            </div>
             <h2 className="section-title">The Values That Guide Our Work</h2>
-            <div className="gold-line center-gold-line" />
             <p className="section-description">
               These fundamental values underpin every conversation, pre-screening assessment, and placement we facilitate.
             </p>
@@ -147,7 +149,7 @@ export const About: React.FC = () => {
             {coreValues.map((val, idx) => (
               <div key={idx} className="value-card">
                 <div className="value-check-icon">
-                  <CheckCircle2 size={20} className="gold-icon" />
+                  <CheckCircle2 size={22} style={{ color: 'var(--color-royal-gold)' }} />
                 </div>
                 <div>
                   <h4 className="value-title">{val.title}</h4>
@@ -159,65 +161,66 @@ export const About: React.FC = () => {
         </div>
       </section>
 
-      {/* Pre-Screening & Quality Statement */}
-      <section className="section section-soft vetting-section">
+      {/* Pre-Screening & Quality Statement - Warm Ivory (3rd Rule) */}
+      <section className="section section-ivory vetting-section">
         <div className="container vetting-container">
           <div className="vetting-text">
-            <div className="eyebrow">STANDARDS & COMPLIANCE</div>
+            <div className="figma-teal-eyebrow">
+              <span className="figma-teal-dash" />
+              <span>STANDARDS & COMPLIANCE</span>
+            </div>
             <h2>Our Diligent Approach to Pre-Screening</h2>
-            <div className="gold-line" />
             <p>
               Recruitment standards directly impact workplace safety and quality of service, particularly within residential care homes and healthcare institutions. We implement consistent pre-screening procedures:
             </p>
             <ul className="vetting-list">
               <li>
-                <CheckCircle2 size={16} className="gold-icon" />
+                <CheckCircle2 size={18} style={{ color: 'var(--color-royal-gold)', flexShrink: 0 }} />
                 <span><strong>Identity Authentication:</strong> Thorough validation of legal identification documents and address history.</span>
               </li>
               <li>
-                <CheckCircle2 size={16} className="gold-icon" />
+                <CheckCircle2 size={18} style={{ color: 'var(--color-royal-gold)', flexShrink: 0 }} />
                 <span><strong>Right to Work Verification:</strong> Documented check of eligibility to work in the UK in compliance with Home Office guidelines.</span>
               </li>
               <li>
-                <CheckCircle2 size={16} className="gold-icon" />
+                <CheckCircle2 size={18} style={{ color: 'var(--color-royal-gold)', flexShrink: 0 }} />
                 <span><strong>Reference Verification:</strong> Obtaining satisfactory employment and character references covering relevant service history.</span>
               </li>
               <li>
-                <CheckCircle2 size={16} className="gold-icon" />
+                <CheckCircle2 size={18} style={{ color: 'var(--color-royal-gold)', flexShrink: 0 }} />
                 <span><strong>Qualifications & Safeguarding:</strong> Checking role-relevant certifications (e.g. NVQ, Care Certificate, Mandatory Training) and facilitating Enhanced DBS clearances.</span>
               </li>
             </ul>
           </div>
 
           <div className="vetting-box-card">
-            <Lock size={32} className="gold-icon mb-3" />
+            <Lock size={32} style={{ color: 'var(--color-royal-gold)', marginBottom: '1rem' }} />
             <h3>Commitment to Transparency</h3>
             <p>
               We operate with complete clarity regarding what checks have been conducted and provide full documentation packages to client hiring managers prior to candidate commencement.
             </p>
-            <Link to="/employers" className="btn btn-primary" style={{ marginTop: '1.25rem', width: '100%' }}>
+            <Link to="/employers" className="btn-figma-primary" style={{ marginTop: '1.5rem', width: '100%', justifyContent: 'center' }}>
               <span>Request Recruitment Support</span>
-              <ArrowRight size={16} />
+              <ArrowRight size={17} />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Closing CTA */}
-      <section className="section section-dark text-center">
-        <div className="container max-w-800">
+      {/* Closing CTA - Deep Teal (2nd Rule) */}
+      <section className="closing-section-dark">
+        <div className="container max-w-800 text-center">
           <h2>Ready to Discuss Your Staffing or Career Needs?</h2>
-          <div className="gold-line center-gold-line" />
-          <p className="lead-paragraph">
+          <p>
             Whether you manage a care home needing dependable shift workers, or you are a professional seeking your next opportunity, our team is ready to assist.
           </p>
           <div className="closing-btn-group">
-            <Link to="/employers" className="btn btn-primary">
-              <Users size={16} />
+            <Link to="/employers" className="btn-figma-primary">
+              <Users size={17} />
               <span>For Employers</span>
             </Link>
-            <Link to="/submit-cv" className="btn btn-secondary">
-              <Briefcase size={16} />
+            <Link to="/submit-cv" className="btn-figma-secondary">
+              <Briefcase size={17} />
               <span>For Job Seekers</span>
             </Link>
           </div>
