@@ -1,0 +1,167 @@
+/* ===== LICHT RECRUITMENT SERVICES - EXACT FIGMA FOOTER ===== */
+
+.figma-footer {
+  background-color: var(--color-deep-teal, #002F3A);
+  color: #FFFFFF;
+  padding: 5rem 0 2.5rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.figma-footer-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.9fr 1fr 1fr;
+  gap: 3.5rem;
+  padding-bottom: 4rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Brand Column */
+.figma-footer-brand-col {
+  max-width: 360px;
+}
+
+.figma-footer-logo-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.figma-footer-logo-link:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.figma-footer-badge {
+  width: 44px;
+  height: 44px;
+  background-color: var(--color-royal-gold, #F5B82E);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-deep-teal, #002F3A);
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.figma-footer-logo-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.figma-footer-title {
+  font-family: var(--font-heading);
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+
+.figma-footer-sub {
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #CBD5E1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.figma-footer-desc {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #CBD5E1;
+  margin-bottom: 1.25rem;
+}
+
+.figma-footer-note {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: #64748B;
+}
+
+/* Nav Columns */
+.figma-footer-heading {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-royal-gold, #F5B82E);
+  margin-bottom: 1.25rem;
+}
+
+.figma-footer-links {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+}
+
+.figma-footer-links a {
+  font-size: 0.92rem;
+  color: #CBD5E1;
+  text-decoration: none;
+  transition: color 0.15s ease, transform 0.15s ease;
+  display: inline-block;
+}
+
+.figma-footer-links a:hover {
+  color: #FFFFFF;
+  transform: translateX(2px);
+}
+
+/* Bottom Bar */
+.figma-footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  padding-top: 2rem;
+}
+
+.figma-footer-copyright {
+  font-size: 0.88rem;
+  color: #94A3B8;
+  margin: 0;
+}
+
+.figma-footer-tagline {
+  font-size: 0.88rem;
+  color: #94A3B8;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .figma-footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+  .figma-footer-brand-col {
+    max-width: 100%;
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .figma-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding-bottom: 2.5rem;
+  }
+  .figma-footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+}

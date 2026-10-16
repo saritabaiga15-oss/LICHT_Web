@@ -1,0 +1,147 @@
+.candidates-hero {
+  background: radial-gradient(circle at 50% 30%, rgba(6, 70, 83, 0.5) 0%, var(--color-deep-teal) 85%);
+  padding: 5.5rem 0 4.5rem 0;
+  border-bottom: 1px solid var(--color-teal-border);
+}
+
+.candidates-hero-title {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 1.25rem;
+}
+
+.candidates-hero-lead {
+  font-size: 1.15rem;
+  color: var(--color-text-light-muted);
+  line-height: 1.65;
+}
+
+/* Journey Grid */
+.journey-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.journey-card {
+  background-color: var(--color-soft-teal);
+  border: 1px solid var(--color-teal-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all var(--transition-normal);
+}
+
+.journey-card:hover {
+  border-color: var(--color-royal-gold);
+  transform: translateY(-4px);
+}
+
+.journey-step-num {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-royal-gold);
+  margin-bottom: 1rem;
+  line-height: 1;
+}
+
+.journey-card h3 {
+  font-size: 1.1rem;
+  color: var(--color-white);
+  margin-bottom: 0.65rem;
+}
+
+.journey-card p {
+  font-size: 0.85rem;
+  color: var(--color-text-light-muted);
+  line-height: 1.5;
+}
+
+.candidate-disclaimer-card {
+  background-color: rgba(0, 47, 58, 0.6);
+  border: 1px solid var(--color-teal-border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.75rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.candidate-disclaimer-card p {
+  font-size: 0.84rem;
+  color: var(--color-text-light);
+  line-height: 1.6;
+}
+
+.candidate-disclaimer-card strong {
+  color: var(--color-royal-gold);
+}
+
+/* Guidance Grid */
+.guidance-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.75rem;
+}
+
+.guidance-card {
+  background-color: var(--color-deep-teal);
+  border: 1px solid var(--color-teal-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.5rem;
+  transition: all var(--transition-normal);
+}
+
+.guidance-card:hover {
+  border-color: var(--color-royal-gold);
+  transform: translateY(-4px);
+}
+
+.guidance-icon-box {
+  width: 48px;
+  height: 48px;
+  background-color: rgba(6, 70, 83, 0.7);
+  border: 1px solid var(--color-royal-gold);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.guidance-card h4 {
+  font-size: 1.15rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-white);
+}
+
+.guidance-card p {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--color-text-light-muted);
+}
+
+@media (max-width: 1100px) {
+  .journey-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .guidance-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .candidates-hero-title {
+    font-size: 2.25rem;
+  }
+  .journey-grid, .guidance-grid {
+    grid-template-columns: 1fr;
+  }
+}

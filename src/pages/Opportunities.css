@@ -1,0 +1,245 @@
+.opportunities-hero {
+  background: radial-gradient(circle at 50% 30%, rgba(6, 70, 83, 0.5) 0%, var(--color-deep-teal) 85%);
+  padding: 5.5rem 0 4.5rem 0;
+  border-bottom: 1px solid var(--color-teal-border);
+}
+
+.opportunities-hero-title {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 1.25rem;
+}
+
+.opportunities-hero-lead {
+  font-size: 1.15rem;
+  color: var(--color-text-light-muted);
+  line-height: 1.65;
+}
+
+.demo-advisory-band {
+  background-color: var(--color-teal-darker);
+  border-bottom: 1px solid rgba(245, 184, 46, 0.2);
+  padding: 0.85rem 0;
+  font-size: 0.82rem;
+  color: var(--color-text-light-muted);
+}
+
+.advisory-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  line-height: 1.5;
+}
+
+.advisory-content strong {
+  color: var(--color-royal-gold);
+}
+
+/* Filter Controls Box */
+.filter-controls-box {
+  background-color: var(--color-soft-teal);
+  border: 1px solid var(--color-teal-border);
+  border-radius: var(--radius-xl);
+  padding: 1.75rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.search-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1.25rem;
+  color: var(--color-royal-gold);
+}
+
+.board-search-input {
+  width: 100%;
+  padding: 1rem 3rem 1rem 3.25rem;
+  background-color: rgba(0, 47, 58, 0.7);
+  border: 1px solid var(--color-teal-border);
+  border-radius: var(--radius-md);
+  color: var(--color-white);
+  font-size: 1rem;
+}
+
+.board-search-input:focus {
+  outline: none;
+  border-color: var(--color-royal-gold);
+  box-shadow: 0 0 0 3px rgba(245, 184, 46, 0.2);
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 1.25rem;
+  color: var(--color-text-light-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.clear-search-btn:hover {
+  color: var(--color-white);
+}
+
+.filter-dropdowns-row {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.filter-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-light-muted);
+}
+
+.filter-select-wrap label {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.filter-select {
+  padding: 0.55rem 1rem;
+  background-color: rgba(0, 47, 58, 0.7);
+  border: 1px solid var(--color-teal-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-white);
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--color-royal-gold);
+}
+
+.btn-reset-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-royal-gold);
+  background: none;
+  border: 1px dashed var(--color-royal-gold);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-reset-filters:hover {
+  background-color: var(--color-gold-subtle);
+}
+
+/* Results Summary */
+.results-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.75rem;
+  font-size: 0.92rem;
+  color: var(--color-text-light-muted);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.results-count strong {
+  color: var(--color-white);
+}
+
+.speculative-link {
+  color: var(--color-royal-gold);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.speculative-link:hover {
+  text-decoration: underline;
+}
+
+/* Vacancies Grid */
+.vacancies-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.75rem;
+}
+
+/* Empty Card */
+.vacancies-empty-card {
+  background-color: var(--color-soft-teal);
+  border: 1px solid var(--color-teal-border);
+  border-radius: var(--radius-xl);
+  padding: 4rem 2rem;
+  text-align: center;
+  max-width: 680px;
+  margin: 2rem auto;
+}
+
+.empty-icon-box {
+  width: 64px;
+  height: 64px;
+  background-color: rgba(0, 47, 58, 0.7);
+  border: 1px solid var(--color-royal-gold);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem auto;
+}
+
+.vacancies-empty-card h3 {
+  font-size: 1.45rem;
+  color: var(--color-white);
+  margin-bottom: 0.75rem;
+}
+
+.vacancies-empty-card p {
+  font-size: 0.94rem;
+  line-height: 1.6;
+  color: var(--color-text-light-muted);
+  margin-bottom: 2rem;
+}
+
+.empty-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1024px) {
+  .vacancies-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .opportunities-hero-title {
+    font-size: 2.25rem;
+  }
+  .filter-dropdowns-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-select-wrap {
+    justify-content: space-between;
+  }
+}
