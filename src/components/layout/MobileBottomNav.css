@@ -1,0 +1,126 @@
+/* ==========================================================================
+   MOBILE BOTTOM NAVIGATION BAR
+   Native-app-like thumb navigation for mobile devices (<= 768px)
+   ========================================================================== */
+
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 990;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(10, 34, 44, 0.09);
+  box-shadow: 0 -4px 20px rgba(10, 34, 44, 0.06);
+  padding-bottom: env(safe-area-inset-bottom, 8px);
+}
+
+.mobile-bottom-nav__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 60px;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 0 8px;
+}
+
+.mobile-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 100%;
+  padding: 6px 4px;
+  color: #64748b;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.mobile-nav-icon {
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.mobile-nav-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  transition: color 0.2s ease;
+}
+
+.mobile-nav-btn:active .mobile-nav-icon {
+  transform: scale(0.9);
+}
+
+.mobile-nav-btn--active {
+  color: #0a222c;
+}
+
+.mobile-nav-btn--active .mobile-nav-icon {
+  color: #0a222c;
+  transform: translateY(-1px);
+}
+
+.mobile-nav-btn--active .mobile-nav-label {
+  font-weight: 700;
+  color: #0a222c;
+}
+
+.mobile-nav-btn--active::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  width: 18px;
+  height: 3px;
+  background: #a88538;
+  border-radius: 999px;
+}
+
+/* Featured Employers Button in Bottom Nav */
+.mobile-nav-btn--employer.mobile-nav-btn--active .mobile-nav-icon-wrap {
+  color: #a88538;
+}
+
+/* User Avatar Indicator */
+.mobile-avatar-indicator {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.mobile-avatar-indicator.candidate {
+  background: linear-gradient(135deg, #0a222c, #1f4e61);
+  border: 1.5px solid #a88538;
+}
+
+.mobile-avatar-indicator.employer {
+  background: #0a222c;
+  color: #a88538;
+  border: 1.5px solid #a88538;
+}
+
+/* Only display on screens <= 768px */
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: block;
+  }
+
+  /* Add bottom padding to body/site-wrapper so content doesn't get covered */
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 8px)) !important;
+  }
+}

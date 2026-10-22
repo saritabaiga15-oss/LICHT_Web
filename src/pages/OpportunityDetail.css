@@ -1,0 +1,330 @@
+/* ===== OPPORTUNITY DETAIL VIEW (Screenshot 5) ===== */
+.job-detail-page {
+  padding: 48px 0 96px;
+  background-color: transparent;
+}
+
+.job-detail-nav {
+  margin-bottom: 24px;
+}
+
+.job-back-link {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #667085;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color var(--transition-fast);
+}
+
+.job-back-link:hover {
+  color: var(--color-brand-green);
+}
+
+.job-detail-banner {
+  margin-bottom: 36px;
+}
+
+/* Header */
+.job-detail-header {
+  margin-bottom: 48px;
+  padding-bottom: 36px;
+  border-bottom: 1px solid var(--color-hairline, #e4e7ec);
+}
+
+.job-detail-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 4.4vw, 3.6rem);
+  font-weight: 500;
+  color: var(--color-brand-navy);
+  line-height: 1.15;
+  margin: 16px 0 20px;
+  letter-spacing: -0.025em;
+  text-transform: none;
+}
+
+.job-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+/* 2-Column Grid */
+.job-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 64px;
+  align-items: flex-start;
+}
+
+/* Left Main Column */
+.job-detail-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.job-section {
+  margin-bottom: 44px;
+}
+
+.job-section-heading {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 500;
+  color: var(--color-brand-navy, #152238);
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+
+.job-section-p {
+  font-size: 1rem;
+  color: #475467;
+  line-height: 1.7;
+}
+
+/* Checkmark List */
+.job-check-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.job-check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  font-size: 0.98rem;
+  color: #344054;
+  line-height: 1.6;
+}
+
+.job-check-icon {
+  color: var(--color-brand-green);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+/* Adjustment Callout Box */
+.job-adjustment-card {
+  background-color: var(--color-warm-canvas, #faf9f6);
+  border: 1px solid var(--color-hairline, #e4e7ec);
+  border-left: 3px solid var(--color-brand-green);
+  border-radius: var(--radius-lg);
+  padding: 32px 30px;
+  margin-top: 16px;
+}
+
+.job-adjustment-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--color-brand-navy, #152238);
+  margin-bottom: 8px;
+  letter-spacing: -0.015em;
+}
+
+.job-adjustment-desc {
+  font-size: 0.92rem;
+  color: #475467;
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+
+/* Right Sidebar */
+.job-detail-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.at-a-glance-card {
+  background-color: var(--color-warm-card, #fcfbf8);
+  border: 1px solid var(--color-hairline, #e3ded5);
+  border-radius: var(--radius-xl);
+  padding: 36px 32px;
+  box-shadow: 0 4px 16px rgba(16, 24, 40, 0.03);
+}
+
+.at-a-glance-title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--color-brand-navy);
+  margin-bottom: 24px;
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+
+.glance-item {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(228, 231, 236, 0.7);
+}
+
+.glance-item:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.glance-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #667085;
+  margin-bottom: 4px;
+}
+
+.glance-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-brand-navy, #152238);
+}
+
+.glance-action-wrap {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-hairline, #e4e7ec);
+  display: flex;
+  flex-direction: column;
+}
+
+.glance-apply-btn {
+  width: 100%;
+  padding: 13px 28px;
+  font-size: 0.95rem;
+}
+
+.glance-subtext {
+  font-size: 0.8rem;
+  color: #667085;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.applied-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #ecfdf3;
+  color: #027a48;
+  border: 1px solid #a6f4c5;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 0.86rem;
+  font-weight: 600;
+  width: 100%;
+}
+
+/* Photo below sidebar */
+.job-sidebar-photo-wrap {
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  height: 280px;
+  border: 1px solid var(--color-hairline, #e4e7ec);
+  box-shadow: 0 4px 16px rgba(16, 24, 40, 0.04);
+}
+
+.job-sidebar-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Mobile Sticky Quick-Apply Bar */
+.mobile-sticky-apply-bar {
+  display: none;
+  position: fixed;
+  bottom: calc(60px + env(safe-area-inset-bottom, 8px));
+  left: 0;
+  right: 0;
+  z-index: 980;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(10, 34, 44, 0.1);
+  padding: 10px 16px;
+  box-shadow: 0 -4px 16px rgba(10, 34, 44, 0.08);
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sticky-apply-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sticky-apply-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0a222c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sticky-apply-pay {
+  font-size: 0.78125rem;
+  color: #059669;
+  font-weight: 600;
+}
+
+.sticky-apply-btn {
+  padding: 9px 18px;
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+.sticky-applied-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #6ee7b7;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* RESPONSIVE */
+@media (max-width: 992px) {
+  .job-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobile-sticky-apply-bar {
+    display: flex;
+  }
+
+  .job-detail-header {
+    margin-bottom: 24px;
+  }
+
+  .job-detail-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .job-detail-page {
+    padding-bottom: 80px;
+  }
+}
+

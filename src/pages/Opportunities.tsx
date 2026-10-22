@@ -2,223 +2,285 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Search, 
-  Filter, 
   MapPin, 
   Briefcase, 
-  Sparkles, 
-  X, 
-  FileText,
-  ArrowRight,
-  Info
+  Clock, 
+  SlidersHorizontal, 
+  Info,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
 import { SAMPLE_VACANCIES, Vacancy } from '../data/mockData';
-import { VacancyCard } from '../components/recruitment/VacancyCard';
 import './Opportunities.css';
 
 export const Opportunities: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSector, setSelectedSector] = useState<string>('All');
-  const [selectedType, setSelectedType] = useState<string>('All');
-  const [selectedLocation, setSelectedLocation] = useState<string>('All');
+  const [keyword, setKeyword] = useState('');
+  const [locationSearch, setLocationSearch] = useState('');
+  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState('relevant');
 
-  // Filter logic
-  const filteredVacancies = useMemo(() => {
-    return SAMPLE_VACANCIES.filter(item => {
-      const matchesSearch = 
-        searchTerm.trim() === '' ||
-        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.location.toLowerCase().includes(searchTerm.toLowerCase());
+  const handleSectorChange = (sector: string) => {
+    setSelectedSectors((prev) =>
+      prev.includes(sector) ? prev.filter((s) => s !== sector) : [...prev, sector]
+    );
+  };
 
-      const matchesSector = 
-        selectedSector === 'All' || item.sector === selectedSector;
-
-      const matchesType = 
-        selectedType === 'All' || item.type === selectedType;
-
-      const matchesLocation = 
-        selectedLocation === 'All' || item.location.toLowerCase().includes(selectedLocation.toLowerCase());
-
-      return matchesSearch && matchesSector && matchesType && matchesLocation;
-    });
-  }, [searchTerm, selectedSector, selectedType, selectedLocation]);
+  const handleTypeChange = (type: string) => {
+    setSelectedTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+  };
 
   const clearFilters = () => {
-    setSearchTerm('');
-    setSelectedSector('All');
-    setSelectedType('All');
-    setSelectedLocation('All');
+    setSelectedSectors([]);
+    setSelectedTypes([]);
+    setKeyword('');
+    setLocationSearch('');
   };
+
+  const filteredVacancies = useMemo(() => {
+    return SAMPLE_VACANCIES.filter((v: Vacancy) => {
+      // Keyword filter
+      if (keyword.trim()) {
+        const query = keyword.toLowerCase();
+        const matchesTitle = v.title.toLowerCase().includes(query);
+        const matchesSummary = v.summary.toLowerCase().includes(query);
+        if (!matchesTitle && !matchesSummary) return false;
+      }
+
+      // Location filter
+      if (locationSearch.trim()) {
+        const locQuery = locationSearch.toLowerCase();
+        if (!v.location.toLowerCase().includes(locQuery)) return false;
+      }
+
+      // Sector filter
+      if (selectedSectors.length > 0) {
+        if (!selectedSectors.includes(v.sector)) return false;
+      }
+
+      // Type filter
+      if (selectedTypes.length > 0) {
+        const matchesContract = selectedTypes.includes(v.contract);
+        const matchesPattern = selectedTypes.includes(v.workingPattern);
+        if (!matchesContract && !matchesPattern) return false;
+      }
+
+      return true;
+    });
+  }, [keyword, locationSearch, selectedSectors, selectedTypes]);
 
   return (
     <div className="opportunities-page">
-      {/* Opportunities Hero */}
+      {/* 1. Header & Hero */}
       <section className="opportunities-hero">
-        <div className="container text-center max-w-800">
-          <div className="figma-hero-eyebrow center-eyebrow">
-            <span className="figma-gold-dash" />
-            <span>OPPORTUNITIES</span>
-          </div>
-          <h1 className="opportunities-hero-title">
-            Current Vacancies & <br />
-            <span className="hero-text-gold">Career Opportunities</span>
-          </h1>
-          <p className="opportunities-hero-lead">
-            Explore active openings across residential care homes, healthcare units, and corporate partners throughout the UK.
-          </p>
-        </div>
-      </section>
-
-      {/* Demo Notice Banner */}
-      <div className="demo-advisory-band">
-        <div className="container advisory-content">
-          <Info size={16} className="gold-icon" />
-          <span>
-            <strong>Representative Demonstration Board:</strong> Published roles below illustrate active vacancy types supported by LICHT. Candidates can express interest directly or submit their CV for immediate consideration across active client instructions.
-          </span>
-        </div>
-      </div>
-
-      {/* Filter and Search Bar */}
-      <section className="section section-dark opportunities-board-section">
         <div className="container">
-          <div className="filter-controls-box">
-            <div className="search-input-group">
-              <Search size={18} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search by job title, skill, or keyword..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="board-search-input"
+          <nav className="figma-breadcrumb" aria-label="Breadcrumb">
+            <Link to="/">Home</Link>
+            <span className="figma-breadcrumb-separator">/</span>
+            <Link to="/candidates">Candidates</Link>
+            <span className="figma-breadcrumb-separator">/</span>
+            <span>Find a job</span>
+          </nav>
+
+          <div className="figma-eyebrow">Candidates / Find a job</div>
+          <h1 className="opportunities-hero__title">
+            Find work that feels right.
+          </h1>
+          <p className="opportunities-hero__subtitle">
+            Explore opportunities in care, healthcare, supported living and business support. Your next chapter starts with you.
+          </p>
+
+          {/* Search Bar */}
+          <div className="opp-search-bar">
+            <div className="opp-search-group">
+              <label htmlFor="opp-keyword" className="opp-search-label">Job title or keyword</label>
+              <input 
+                type="text" 
+                id="opp-keyword"
+                placeholder="e.g. Care assistant"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                className="opp-search-input"
               />
-              {searchTerm && (
-                <button 
-                  type="button" 
-                  onClick={() => setSearchTerm('')} 
-                  className="clear-search-btn"
-                  aria-label="Clear search"
-                >
-                  <X size={16} />
-                </button>
-              )}
             </div>
 
-            <div className="filter-dropdowns-row">
-              <div className="filter-select-wrap">
-                <label htmlFor="filter-sector">Sector:</label>
-                <select
-                  id="filter-sector"
-                  value={selectedSector}
-                  onChange={(e) => setSelectedSector(e.target.value)}
-                  className="filter-select"
-                >
-                  <option value="All">All Sectors</option>
-                  <option value="Care Homes">Care Homes</option>
-                  <option value="Healthcare">Healthcare</option>
-                  <option value="Corporate">Corporate</option>
-                </select>
-              </div>
-
-              <div className="filter-select-wrap">
-                <label htmlFor="filter-type">Employment Type:</label>
-                <select
-                  id="filter-type"
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                  className="filter-select"
-                >
-                  <option value="All">All Types</option>
-                  <option value="Full-time">Full-time</option>
-                  <option value="Permanent">Permanent</option>
-                  <option value="Contract">Contract</option>
-                  <option value="Part-time">Part-time</option>
-                </select>
-              </div>
-
-              <div className="filter-select-wrap">
-                <label htmlFor="filter-location">Region:</label>
-                <select
-                  id="filter-location"
-                  value={selectedLocation}
-                  onChange={(e) => setSelectedLocation(e.target.value)}
-                  className="filter-select"
-                >
-                  <option value="All">All Regions</option>
-                  <option value="London">London & South East</option>
-                  <option value="Birmingham">Birmingham / West Midlands</option>
-                  <option value="Manchester">Manchester / North West</option>
-                  <option value="Leeds">Leeds / Yorkshire</option>
-                </select>
-              </div>
-
-              {(searchTerm || selectedSector !== 'All' || selectedType !== 'All' || selectedLocation !== 'All') && (
-                <button type="button" onClick={clearFilters} className="btn-reset-filters">
-                  <X size={14} />
-                  <span>Reset Filters</span>
-                </button>
-              )}
+            <div className="opp-search-group">
+              <label htmlFor="opp-location" className="opp-search-label">Location</label>
+              <input 
+                type="text" 
+                id="opp-location"
+                placeholder="Town, city or postcode"
+                value={locationSearch}
+                onChange={(e) => setLocationSearch(e.target.value)}
+                className="opp-search-input"
+              />
             </div>
+
+            <button type="button" className="btn-pill-green opp-search-btn">
+              Search jobs
+            </button>
           </div>
 
-          {/* Results Summary */}
-          <div className="results-summary-row">
-            <span className="results-count">
-              Showing <strong>{filteredVacancies.length}</strong> matching vacancies
-            </span>
-            <Link to="/submit-cv" className="speculative-link">
-              <span>Don't see a match? Submit CV speculatively</span>
-              <ArrowRight size={14} />
-            </Link>
-          </div>
-
-          {/* Vacancies Grid */}
-          {filteredVacancies.length > 0 ? (
-            <div className="vacancies-grid">
-              {filteredVacancies.map((vacancy) => (
-                <VacancyCard key={vacancy.id} vacancy={vacancy} />
-              ))}
-            </div>
-          ) : (
-            <div className="vacancies-empty-card">
-              <div className="empty-icon-box">
-                <Search size={36} className="gold-icon" />
-              </div>
-              <h3>No Vacancies Found Matching Your Filter</h3>
-              <p>
-                There are currently no published opportunities matching your search criteria. Please adjust your filters or submit your CV for consideration for suitable upcoming client vacancies.
+          {/* Illustrative Notice Banner */}
+          <div className="opp-notice-banner">
+            <Info size={18} className="opp-notice-icon" />
+            <div>
+              <strong className="opp-notice-title">Illustrative opportunities</strong>
+              <p className="opp-notice-text">
+                These example roles demonstrate the candidate experience; they are not live vacancies.
               </p>
-              <div className="empty-actions">
-                <button type="button" onClick={clearFilters} className="btn btn-secondary">
-                  <span>Clear All Filters</span>
-                </button>
-                <Link to="/submit-cv" className="btn btn-primary">
-                  <FileText size={16} />
-                  <span>Submit Your CV Directly</span>
-                </Link>
-              </div>
             </div>
-          )}
+          </div>
         </div>
       </section>
 
-      {/* CV CTA Banner */}
-      <section className="section section-soft text-center">
-        <div className="container max-w-800">
-          <h2>Looking for Tailored Career Support?</h2>
-          <div className="gold-line center-gold-line" />
-          <p className="lead-paragraph">
-            Our consultants frequently place candidates directly with care homes and corporate organisations prior to public role advertisement.
-          </p>
-          <div className="closing-btn-group">
-            <Link to="/submit-cv" className="btn btn-primary">
-              <FileText size={16} />
-              <span>Submit Your CV for Future Roles</span>
-            </Link>
-            <Link to="/contact" className="btn btn-secondary">
-              <span>Speak with a Consultant</span>
-            </Link>
-          </div>
+      {/* 2. Main 2-Column: Filters Sidebar + Results Grid */}
+      <section className="opp-main-section">
+        <div className="container opp-main-grid">
+          {/* Left Column: Filter Sidebar */}
+          <aside className="opp-filter-sidebar" aria-label="Job filters">
+            <div className="filter-header">
+              <h3 className="filter-title">Filter opportunities</h3>
+              <SlidersHorizontal size={18} color="#475467" />
+            </div>
+
+            {/* Sector Filters */}
+            <div className="filter-group">
+              <h4 className="filter-group-title">Sector</h4>
+              <div className="filter-checkbox-list">
+                {['Care homes', 'Healthcare', 'Supported living', 'Corporate'].map((sector) => (
+                  <label key={sector} className="filter-checkbox-item">
+                    <input 
+                      type="checkbox"
+                      checked={selectedSectors.includes(sector)}
+                      onChange={() => handleSectorChange(sector)}
+                    />
+                    <span>{sector}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Job Type Filters */}
+            <div className="filter-group">
+              <h4 className="filter-group-title">Job type</h4>
+              <div className="filter-checkbox-list">
+                {['Temporary', 'Permanent', 'Full time', 'Part time'].map((type) => (
+                  <label key={type} className="filter-checkbox-item">
+                    <input 
+                      type="checkbox"
+                      checked={selectedTypes.includes(type)}
+                      onChange={() => handleTypeChange(type)}
+                    />
+                    <span>{type}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <button 
+              type="button" 
+              onClick={clearFilters}
+              className="clear-filters-btn"
+            >
+              Clear all filters <span className="arrow-up-right">↗</span>
+            </button>
+          </aside>
+
+          {/* Right Column: Roles List */}
+          <main className="opp-results-col">
+            <div className="opp-results-header">
+              <span className="opp-results-count">
+                {filteredVacancies.length} example {filteredVacancies.length === 1 ? 'opportunity' : 'opportunities'}
+              </span>
+
+              <div className="opp-sort-wrap">
+                <select 
+                  value={sortBy} 
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="opp-sort-select"
+                >
+                  <option value="relevant">Most relevant</option>
+                  <option value="recent">Most recent</option>
+                </select>
+                <ChevronDown size={14} className="sort-chevron" />
+              </div>
+            </div>
+
+            {/* Job Cards */}
+            <div className="opp-cards-list">
+              {filteredVacancies.length === 0 ? (
+                <div className="no-vacancies-box">
+                  <p>No matching opportunities found for your criteria.</p>
+                  <button type="button" onClick={clearFilters} className="btn-pill-outline" style={{ marginTop: '12px' }}>
+                    Reset all filters
+                  </button>
+                </div>
+              ) : (
+                filteredVacancies.map((job) => (
+                  <div key={job.id} className="job-card">
+                    <div className="job-card__top">
+                      <span className="job-badge">{job.sector}</span>
+                      <span className="job-ref">{job.id}</span>
+                    </div>
+
+                    <h3 className="job-card__title">{job.title}</h3>
+
+                    <div className="job-card__meta">
+                      <span className="job-meta-item">
+                        <MapPin size={15} className="job-meta-icon" />
+                        {job.location}
+                      </span>
+                      <span className="job-meta-item">
+                        <Briefcase size={15} className="job-meta-icon" />
+                        {job.contract}
+                      </span>
+                      <span className="job-meta-item">
+                        <Clock size={15} className="job-meta-icon" />
+                        {job.workingPattern}
+                      </span>
+                    </div>
+
+                    <p className="job-card__desc">{job.summary}</p>
+
+                    <div className="job-card__footer">
+                      <span className="job-card__pay">{job.pay}</span>
+                      <Link to={`/opportunities/${job.id}`} className="job-card__link">
+                        View role <span className="arrow-up-right">↗</span>
+                      </Link>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Pagination */}
+            <div className="opp-pagination">
+              <button type="button" className="pagination-btn pagination-btn--nav" aria-label="Previous page" disabled>
+                <ChevronLeft size={16} />
+              </button>
+              <button type="button" className="pagination-btn pagination-btn--active">
+                1
+              </button>
+              <button type="button" className="pagination-btn pagination-btn--nav" aria-label="Next page" disabled>
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
+            {/* Not Seeing Your Next Role Callout */}
+            <div className="not-seeing-role-card">
+              <h3 className="not-seeing-title">Not seeing your next role?</h3>
+              <p className="not-seeing-desc">
+                Send us your CV and tell us what you're looking for.
+              </p>
+              <Link to="/submit-cv" className="btn-pill-white not-seeing-btn">
+                Register your interest <span className="arrow-up-right">↗</span>
+              </Link>
+            </div>
+          </main>
         </div>
       </section>
     </div>

@@ -1,55 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { ChevronDown, Menu, X, ArrowRight } from 'lucide-react';
+import { Menu, X, Building2 } from 'lucide-react';
+import { BrandLogo } from '../common/BrandLogo';
+import { useAuth } from '../../context/AuthContext';
+import { useEmployer } from '../../context/EmployerContext';
 import './Navbar.css';
 
-const NAV_LINKS = [
-  { label: 'Home', path: '/' },
-  { label: 'About us', path: '/about' },
-  {
-    label: 'Services',
-    path: '/services',
-    children: [
-      { label: 'Care Home Recruitment', path: '/services/care-homes' },
-      { label: 'Healthcare Recruitment', path: '/services/healthcare' },
-      { label: 'Corporate Recruitment', path: '/services/corporate' },
-    ],
-  },
-  { label: 'Employers', path: '/employers' },
-  { label: 'Candidates', path: '/candidates' },
-  { label: 'Opportunities', path: '/opportunities' },
-  { label: 'Contact', path: '/contact' },
-];
-
-export function Navbar() {
+export const Navbar: React.FC = () => {
+  const { user, isAuthenticated } = useAuth();
+  const { employer, isEmployerAuthenticated } = useEmployer();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [servicesOpen, setServicesOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
 
   // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false);
-    setServicesOpen(false);
   }, [location.pathname]);
-
-  // Detect scroll position for dynamic glassmorphic opacity
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Close dropdowns on outside click
-  useEffect(() => {
-    if (!servicesOpen) return;
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('.nav-item-dropdown')) setServicesOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [servicesOpen]);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -57,182 +23,177 @@ export function Navbar() {
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
+  const isFindAJobActive = 
+    location.pathname.startsWith('/opportunities') || 
+    location.pathname.startsWith('/candidates');
+
+  const isServicesActive = location.pathname.startsWith('/services');
+  const isEmployersActive = 
+    location.pathname.startsWith('/employer') || 
+    location.pathname.startsWith('/employers');
+  const isAboutActive = location.pathname.startsWith('/about');
+  const isContactActive = location.pathname.startsWith('/contact');
+
   return (
-    <>
-      <header className={`navbar ${scrolled ? 'navbar--scrolled' : ''} ${mobileOpen ? 'navbar--open' : ''}`} role="banner">
-        <nav className="navbar__inner container" aria-label="Main navigation">
-          {/* Original Authentic Recruitment Logo */}
-          <Link to="/" className="navbar__brand" aria-label="LICHT Recruitment Services – Home">
-            <img 
-              src="/assets/recruitment_logo.png" 
-              alt="LICHT Recruitment Services Limited – Reliable People. Professional Recruitment." 
-              className="navbar__logo-img"
-            />
+    <header className="site-header" role="banner">
+      <div className="container site-header__container">
+        {/* Brand / Logo */}
+        <Link to="/" className="site-header__brand" aria-label="LICHT Recruitment Services Limited">
+          <BrandLogo variant="dark" />
+        </Link>
+
+        {/* Desktop Navigation Links */}
+        <nav className="site-header__nav" aria-label="Main Navigation">
+          <ul className="site-header__links" role="list">
+            <li>
+              <NavLink 
+                to="/services" 
+                className={({ isActive }) => `nav-item ${isActive || isServicesActive ? 'nav-item--active' : ''}`}
+              >
+                Services & sectors
+              </NavLink>
+            </li>
+            <li>
+              <NavLink 
+                to="/opportunities" 
+                className={`nav-item ${isFindAJobActive ? 'nav-item--active' : ''}`}
+              >
+                Find a job
+              </NavLink>
+            </li>
+            <li>
+              <NavLink 
+                to="/about" 
+                className={({ isActive }) => `nav-item ${isActive || isAboutActive ? 'nav-item--active' : ''}`}
+              >
+                About
+              </NavLink>
+            </li>
+            <li>
+              <NavLink 
+                to="/contact" 
+                className={({ isActive }) => `nav-item ${isActive || isContactActive ? 'nav-item--active' : ''}`}
+              >
+                Contact
+              </NavLink>
+            </li>
+          </ul>
+        </nav>
+
+        {/* Header Right Action */}
+        <div className="site-header__actions">
+          {/* Employers / Post Job Button */}
+          <Link 
+            to={isEmployerAuthenticated ? "/employer" : "/employer/login"} 
+            className={`btn-navbar-employer ${isEmployersActive ? 'btn-navbar-employer--active' : ''}`}
+            title="Post a job or hire healthcare staff"
+          >
+            <Building2 size={15} />
+            <span>Employers / Post Job</span>
           </Link>
 
-          {/* Desktop Nav */}
-          <ul className="navbar__links" role="list">
-            {NAV_LINKS.map((link) =>
-              link.children ? (
-                <li key={link.label} className="nav-item nav-item-dropdown">
-                  <button
-                    className={`nav-link nav-link-btn ${location.pathname.startsWith('/services') ? 'active' : ''}`}
-                    onClick={() => setServicesOpen((p) => !p)}
-                    aria-expanded={servicesOpen}
-                    aria-haspopup="true"
-                  >
-                    <span>{link.label}</span>
-                    <ChevronDown
-                      size={15}
-                      className={`nav-chevron ${servicesOpen ? 'rotated' : ''}`}
-                      aria-hidden="true"
-                    />
-                    {location.pathname.startsWith('/services') && (
-                      <span className="nav-active-indicator" />
-                    )}
-                  </button>
-                  {servicesOpen && (
-                    <div className="dropdown" role="menu">
-                      {link.children.map((child) => (
-                        <NavLink
-                          key={child.path}
-                          to={child.path}
-                          className="dropdown__item"
-                          role="menuitem"
-                          onClick={() => setServicesOpen(false)}
-                        >
-                          {child.label}
-                        </NavLink>
-                      ))}
-                    </div>
-                  )}
-                </li>
-              ) : (
-                <li key={link.label} className="nav-item">
-                  <NavLink
-                    to={link.path}
-                    end={link.path === '/'}
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                  >
-                    <span>{link.label}</span>
-                    {((link.path === '/' && location.pathname === '/') || 
-                      (link.path !== '/' && location.pathname.startsWith(link.path))) && (
-                      <span className="nav-active-indicator" />
-                    )}
-                  </NavLink>
-                </li>
-              )
-            )}
-          </ul>
-
-          {/* Single Figma CTA Button: Request support -> */}
-          <div className="navbar__actions">
-            <Link to="/employers" className="navbar__btn-cta">
-              <span>Request support</span>
-              <ArrowRight size={16} aria-hidden="true" />
+          {isEmployerAuthenticated && employer ? (
+            <Link to="/employer" className="header-profile-pill header-profile-pill--employer" title="View Employer Portal">
+              <span className="header-avatar-circle" style={{ background: '#0a222c' }}>
+                <Building2 size={14} />
+              </span>
+              <span className="header-user-name">{employer.organisationName.split(' ')[0]}</span>
+              <span className="header-profile-badge">Portal ↗</span>
             </Link>
-          </div>
+          ) : isAuthenticated && user ? (
+            <Link to="/profile" className="header-profile-pill" title="View your candidate profile & applications">
+              <span className="header-avatar-circle">
+                {user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+              </span>
+              <span className="header-user-name">{user.fullName.split(' ')[0]}</span>
+              <span className="header-profile-badge">Profile ↗</span>
+            </Link>
+          ) : (
+            <Link to="/login" className="btn-pill-green header-cta-btn">
+              Log in
+            </Link>
+          )}
 
-          {/* Mobile Toggle */}
-          <button
-            className="navbar__hamburger"
-            onClick={() => setMobileOpen((p) => !p)}
-            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+          {/* Mobile hamburger toggle */}
+          <button 
+            type="button" 
+            className="mobile-nav-toggle" 
+            onClick={() => setMobileOpen(!mobileOpen)}
             aria-expanded={mobileOpen}
-            aria-controls="mobile-menu"
+            aria-label="Toggle navigation menu"
           >
             {mobileOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
-        </nav>
-      </header>
-
-      {/* Mobile Menu Overlay */}
-      <div
-        id="mobile-menu"
-        className={`mobile-menu ${mobileOpen ? 'mobile-menu--open' : ''}`}
-        aria-hidden={!mobileOpen}
-      >
-        <div className="mobile-menu__inner">
-          <nav aria-label="Mobile navigation">
-            <div className="mobile-menu__header">
-              <Link to="/" onClick={() => setMobileOpen(false)}>
-                <img 
-                  src="/assets/recruitment_logo.png" 
-                  alt="LICHT Recruitment Services Limited" 
-                  className="navbar__logo-img"
-                  style={{ height: '44px', width: 'auto' }}
-                />
-              </Link>
-            </div>
-            <ul className="mobile-menu__links" role="list">
-              {NAV_LINKS.map((link) =>
-                link.children ? (
-                  <li key={link.label}>
-                    <button
-                      className="mobile-nav-link mobile-nav-link-btn"
-                      onClick={() => setServicesOpen((p) => !p)}
-                      aria-expanded={servicesOpen}
-                    >
-                      {link.label}
-                      <ChevronDown
-                        size={16}
-                        className={`nav-chevron ${servicesOpen ? 'rotated' : ''}`}
-                        aria-hidden="true"
-                      />
-                    </button>
-                    {servicesOpen && (
-                      <ul className="mobile-submenu" role="list">
-                        {link.children.map((child) => (
-                          <li key={child.path}>
-                            <NavLink
-                              to={child.path}
-                              className={({ isActive }) =>
-                                `mobile-sub-link ${isActive ? 'active' : ''}`
-                              }
-                            >
-                              {child.label}
-                            </NavLink>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                ) : (
-                  <li key={link.label}>
-                    <NavLink
-                      to={link.path}
-                      end={link.path === '/'}
-                      className={({ isActive }) =>
-                        `mobile-nav-link ${isActive ? 'active' : ''}`
-                      }
-                    >
-                      {link.label}
-                    </NavLink>
-                  </li>
-                )
-              )}
-            </ul>
-
-            <div className="mobile-menu__actions">
-              <Link to="/employers" className="navbar__btn-cta" style={{ justifyContent: 'center', width: '100%' }}>
-                <span>Request support</span>
-                <ArrowRight size={16} aria-hidden="true" />
-              </Link>
-            </div>
-          </nav>
         </div>
       </div>
 
-      {/* Mobile Backdrop */}
+      {/* Mobile Drawer Backdrop & Sheet */}
       {mobileOpen && (
-        <div
-          className="mobile-backdrop"
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-    </>
-  );
-}
+        <>
+          <div 
+            className="mobile-drawer-overlay" 
+            onClick={() => setMobileOpen(false)} 
+            aria-hidden="true" 
+          />
+          <div className="mobile-drawer" role="dialog" aria-modal="true">
+            <div className="mobile-drawer__links">
+              <Link to="/opportunities" className={`mobile-nav-link ${isFindAJobActive ? 'active' : ''}`}>
+                <span>Find a Job / Vacancies</span>
+                <span className="mobile-nav-pill">Browse</span>
+              </Link>
+              <Link to="/employer" className={`mobile-nav-link ${isEmployersActive ? 'active' : ''}`}>
+                <span>Employers & Staffing</span>
+                <span className="mobile-nav-pill gold">Hire Staff</span>
+              </Link>
+              <Link to="/services" className={`mobile-nav-link ${isServicesActive ? 'active' : ''}`}>
+                <span>Services & Sectors</span>
+              </Link>
+              <Link to="/about" className={`mobile-nav-link ${isAboutActive ? 'active' : ''}`}>
+                <span>About LICHT</span>
+              </Link>
+              <Link to="/contact" className={`mobile-nav-link ${isContactActive ? 'active' : ''}`}>
+                <span>Contact & Placement Desk</span>
+              </Link>
 
+              <div className="mobile-drawer__cta">
+                {isEmployerAuthenticated && employer ? (
+                  <div className="mobile-logged-box">
+                    <span className="mobile-logged-tag">Logged in as Employer</span>
+                    <strong className="mobile-logged-title">{employer.organisationName}</strong>
+                    <Link to="/employer" className="btn-pill-green mobile-full-btn">
+                      Access Employer Dashboard ↗
+                    </Link>
+                  </div>
+                ) : isAuthenticated && user ? (
+                  <div className="mobile-logged-box">
+                    <span className="mobile-logged-tag">Logged in as Candidate</span>
+                    <strong className="mobile-logged-title">{user.fullName}</strong>
+                    <Link to="/profile" className="btn-pill-green mobile-full-btn">
+                      My Profile & Applications ({user.appliedJobs?.length || 0}) ↗
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="mobile-auth-actions">
+                    <Link to="/login" className="btn-pill-green mobile-full-btn">
+                      Candidate Sign In / Register
+                    </Link>
+                    <Link to="/employer/login" className="btn-pill-outline mobile-full-btn">
+                      <Building2 size={16} /> Employer Portal Access ↗
+                    </Link>
+                  </div>
+                )}
+
+                <div className="mobile-drawer-admin-link">
+                  <Link to="/admin">
+                    Admin Compliance Desk ↗
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </header>
+  );
+};
 export default Navbar;

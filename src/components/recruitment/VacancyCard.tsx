@@ -42,10 +42,12 @@ export const VacancyCard: React.FC<VacancyCardProps> = ({ vacancy, onSelectRole 
               <span className="demo-notice-tag">Sample Role</span>
             )}
           </div>
-          <span className="posted-date">
-            <Calendar size={13} />
-            <span>Posted: {vacancy.postedDate}</span>
-          </span>
+          {vacancy.postedDate && (
+            <span className="posted-date">
+              <Calendar size={13} />
+              <span>Posted: {vacancy.postedDate}</span>
+            </span>
+          )}
         </div>
 
         <h3 className="vacancy-title">{vacancy.title}</h3>
@@ -57,23 +59,25 @@ export const VacancyCard: React.FC<VacancyCardProps> = ({ vacancy, onSelectRole 
           </div>
           <div className="detail-item">
             <Briefcase size={15} className="gold-icon" />
-            <span>{vacancy.salary}</span>
+            <span>{vacancy.salary || vacancy.pay}</span>
           </div>
         </div>
 
-        <p className="vacancy-desc-snippet">{vacancy.description}</p>
+        <p className="vacancy-desc-snippet">{vacancy.description || vacancy.summary}</p>
 
-        <div className="vacancy-essential-preview">
-          <span className="preview-label">Key Requirements:</span>
-          <ul className="preview-list">
-            {vacancy.essentialRequirements.slice(0, 2).map((req, idx) => (
-              <li key={idx}>
-                <CheckCircle2 size={13} className="gold-icon" />
-                <span>{req}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {vacancy.essentialRequirements && vacancy.essentialRequirements.length > 0 && (
+          <div className="vacancy-essential-preview">
+            <span className="preview-label">Key Requirements:</span>
+            <ul className="preview-list">
+              {vacancy.essentialRequirements.slice(0, 2).map((req: string, idx: number) => (
+                <li key={idx}>
+                  <CheckCircle2 size={13} className="gold-icon" />
+                  <span>{req}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="vacancy-actions">
           <button 
@@ -108,8 +112,8 @@ export const VacancyCard: React.FC<VacancyCardProps> = ({ vacancy, onSelectRole 
                 <h3 className="modal-title">{vacancy.title}</h3>
                 <div className="modal-meta">
                   <span><MapPin size={14} className="gold-icon" /> {vacancy.location}</span>
-                  <span><Briefcase size={14} className="gold-icon" /> {vacancy.salary}</span>
-                  <span><Calendar size={14} className="gold-icon" /> {vacancy.type}</span>
+                  <span><Briefcase size={14} className="gold-icon" /> {vacancy.salary || vacancy.pay}</span>
+                  <span><Calendar size={14} className="gold-icon" /> {vacancy.type || vacancy.contract}</span>
                 </div>
               </div>
               <button 
@@ -125,32 +129,36 @@ export const VacancyCard: React.FC<VacancyCardProps> = ({ vacancy, onSelectRole 
             <div className="modal-body">
               <div className="modal-section">
                 <h4>Role Summary</h4>
-                <p>{vacancy.description}</p>
+                <p>{vacancy.description || vacancy.summary || vacancy.roleMeaning}</p>
               </div>
 
-              <div className="modal-section">
-                <h4>Primary Responsibilities</h4>
-                <ul>
-                  {vacancy.responsibilities.map((resp, i) => (
-                    <li key={i}>{resp}</li>
-                  ))}
-                </ul>
-              </div>
+              {vacancy.responsibilities && vacancy.responsibilities.length > 0 && (
+                <div className="modal-section">
+                  <h4>Primary Responsibilities</h4>
+                  <ul>
+                    {vacancy.responsibilities.map((resp: string, i: number) => (
+                      <li key={i}>{resp}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
-              <div className="modal-section">
-                <h4>Essential Criteria</h4>
-                <ul>
-                  {vacancy.essentialRequirements.map((req, i) => (
-                    <li key={i}>{req}</li>
-                  ))}
-                </ul>
-              </div>
+              {vacancy.essentialRequirements && vacancy.essentialRequirements.length > 0 && (
+                <div className="modal-section">
+                  <h4>Essential Criteria</h4>
+                  <ul>
+                    {vacancy.essentialRequirements.map((req: string, i: number) => (
+                      <li key={i}>{req}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
-              {vacancy.desirableRequirements.length > 0 && (
+              {vacancy.desirableRequirements && vacancy.desirableRequirements.length > 0 && (
                 <div className="modal-section">
                   <h4>Desirable Criteria</h4>
                   <ul>
-                    {vacancy.desirableRequirements.map((des, i) => (
+                    {vacancy.desirableRequirements.map((des: string, i: number) => (
                       <li key={i}>{des}</li>
                     ))}
                   </ul>

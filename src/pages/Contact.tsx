@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Mail, 
   Phone, 
@@ -11,7 +12,9 @@ import {
   ShieldCheck, 
   MessageSquare,
   Building2,
-  Users
+  Users,
+  Briefcase,
+  ArrowRight
 } from 'lucide-react';
 import './Contact.css';
 
@@ -90,264 +93,331 @@ export const Contact: React.FC = () => {
       setIsSubmitting(false);
       setSubmittedRef(refCode);
       setFormData(initialContactData);
-    }, 1100);
+    }, 900);
   };
 
   return (
     <div className="contact-page">
-      {/* Hero */}
+      {/* 1. HERO SECTION */}
       <section className="contact-hero">
-        <div className="container text-center max-w-800">
-          <div className="figma-hero-eyebrow center-eyebrow">
-            <span className="figma-gold-dash" />
-            <span>CONTACT US</span>
+        <div className="container contact-hero-container">
+          <nav className="contact-breadcrumb" aria-label="Breadcrumb">
+            <Link to="/">Home</Link>
+            <span className="contact-breadcrumb-sep">/</span>
+            <span>Contact</span>
+          </nav>
+
+          <div className="contact-eyebrow">
+            <span className="contact-gold-dash" />
+            <span>Direct Enquiries & Placement Desk</span>
           </div>
+
           <h1 className="contact-hero-title">
-            Let's start a <br />
-            <span className="hero-text-gold">conversation.</span>
+            Let's start a <span className="contact-text-gold">conversation.</span>
           </h1>
+
           <p className="contact-hero-lead">
-            We welcome enquiries from care home owners, healthcare staffing coordinators, corporate employers, and prospective candidates throughout the UK.
+            We welcome enquiries from care home operators, healthcare providers, NHS staffing coordinators, and qualified candidates across the United Kingdom.
           </p>
         </div>
       </section>
 
-      {/* Main Content Layout */}
-      <section className="section section-dark contact-main-section">
+      {/* 2. MAIN 2-COLUMN SECTION */}
+      <section className="contact-main-section">
         <div className="container contact-grid">
-          {/* Left Column: Form */}
+          {/* Left Column: Contact Form */}
           <div className="contact-form-column">
-            {submittedRef ? (
-              <div className="form-success-card">
-                <div className="success-icon-box">
-                  <CheckCircle2 size={44} className="gold-icon" />
-                </div>
-                <h3>Enquiry Successfully Received</h3>
-                <p className="success-ref">Message Reference: <strong>{submittedRef}</strong></p>
-                <p className="success-message">
-                  Thank you for getting in touch. Your message has been routed to our recruitment consultancy team. We endeavour to respond to all enquiries within one business day.
-                </p>
-                <button 
-                  type="button" 
-                  className="btn btn-primary"
-                  onClick={() => setSubmittedRef(null)}
-                >
-                  Send Another Message
-                </button>
-              </div>
-            ) : (
-              <form className="recruitment-form" onSubmit={handleSubmit} noValidate>
-                <div className="form-header-banner">
-                  <MessageSquare size={20} className="gold-icon" />
-                  <div>
-                    <h4>Send a Message to Our Consultants</h4>
-                    <p>Select your enquiry category and complete the details below.</p>
+            <div className="contact-form-card">
+              {submittedRef ? (
+                <div className="form-success-card">
+                  <div className="success-icon-box">
+                    <CheckCircle2 size={44} className="text-gold" />
                   </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label" htmlFor="enquiryType">
-                    Enquiry Type <span className="required">*</span>
-                  </label>
-                  <select
-                    id="enquiryType"
-                    name="enquiryType"
-                    className="form-select"
-                    value={formData.enquiryType}
-                    onChange={handleChange}
-                  >
-                    <option value="Employer Staffing">Employer Staffing Enquiry (Care Homes, Healthcare, Corporate)</option>
-                    <option value="Candidate Query">Candidate Career / CV Query</option>
-                    <option value="General Enquiry">General Business Enquiry</option>
-                  </select>
-                </div>
-
-                <div className="form-grid-2">
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="fullName">
-                      Your Full Name <span className="required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="fullName"
-                      name="fullName"
-                      className={`form-input ${errors.fullName ? 'input-error' : ''}`}
-                      placeholder="e.g. David Morrison"
-                      value={formData.fullName}
-                      onChange={handleChange}
-                    />
-                    {errors.fullName && <span className="form-error"><AlertCircle size={12} /> {errors.fullName}</span>}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="email">
-                      Email Address <span className="required">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      className={`form-input ${errors.email ? 'input-error' : ''}`}
-                      placeholder="e.g. d.morrison@example.com"
-                      value={formData.email}
-                      onChange={handleChange}
-                    />
-                    {errors.email && <span className="form-error"><AlertCircle size={12} /> {errors.email}</span>}
-                  </div>
-                </div>
-
-                <div className="form-grid-2">
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="telephone">
-                      Telephone Number (Optional)
-                    </label>
-                    <input
-                      type="tel"
-                      id="telephone"
-                      name="telephone"
-                      className="form-input"
-                      placeholder="e.g. 020 7946 0192"
-                      value={formData.telephone}
-                      onChange={handleChange}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="subject">
-                      Subject / Role Title <span className="required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="subject"
-                      name="subject"
-                      className={`form-input ${errors.subject ? 'input-error' : ''}`}
-                      placeholder="e.g. Staffing Cover Enquiry / Candidate Query"
-                      value={formData.subject}
-                      onChange={handleChange}
-                    />
-                    {errors.subject && <span className="form-error"><AlertCircle size={12} /> {errors.subject}</span>}
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label" htmlFor="message">
-                    Your Message <span className="required">*</span>
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    rows={4}
-                    className={`form-textarea ${errors.message ? 'input-error' : ''}`}
-                    placeholder="Provide details about your requirements, vacancy timeline, or enquiry..."
-                    value={formData.message}
-                    onChange={handleChange}
-                  />
-                  {errors.message && <span className="form-error"><AlertCircle size={12} /> {errors.message}</span>}
-                </div>
-
-                <div className="form-consent-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      name="privacyConsent"
-                      checked={formData.privacyConsent}
-                      onChange={handleChange}
-                    />
-                    <span>
-                      I agree that LICHT Recruitment Services Limited may process this information to reply to my query in accordance with the <a href="/privacy-policy" target="_blank" rel="noreferrer">Privacy Policy</a>.
-                    </span>
-                  </label>
-                  {errors.privacyConsent && <span className="form-error"><AlertCircle size={12} /> {errors.privacyConsent}</span>}
-                </div>
-
-                <div className="form-submit-row">
+                  <h3 className="success-title">Enquiry Successfully Received</h3>
+                  <p className="success-ref">Message Reference: <strong>{submittedRef}</strong></p>
+                  <p className="success-message">
+                    Thank you for getting in touch. Your enquiry has been routed to our recruitment placement desk. A senior recruitment consultant will respond within one business day.
+                  </p>
                   <button 
-                    type="submit" 
-                    className="btn btn-primary form-submit-btn" 
-                    disabled={isSubmitting}
+                    type="button" 
+                    className="btn-pill-green"
+                    onClick={() => setSubmittedRef(null)}
+                    style={{ marginTop: '20px' }}
                   >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 size={18} className="spinner" />
-                        <span>Sending Message...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Submit Message</span>
-                        <Send size={16} />
-                      </>
-                    )}
+                    Send Another Message
                   </button>
-                  <div className="form-privacy-note">
-                    <ShieldCheck size={14} className="gold-icon" />
-                    <span>No marketing spam. UK GDPR Protected.</span>
-                  </div>
                 </div>
-              </form>
-            )}
+              ) : (
+                <form className="contact-form" onSubmit={handleSubmit} noValidate>
+                  <div className="form-header-banner">
+                    <div className="banner-icon-box">
+                      <MessageSquare size={20} className="text-gold" />
+                    </div>
+                    <div>
+                      <h3 className="banner-title">Send a Message to Our Consultants</h3>
+                      <p className="banner-desc">Select your enquiry category and complete the details below.</p>
+                    </div>
+                  </div>
+
+                  <div className="form-field-group">
+                    <label className="form-field-label" htmlFor="enquiryType">
+                      Enquiry Type <span className="required-star">*</span>
+                    </label>
+                    <div className="select-wrapper">
+                      <select
+                        id="enquiryType"
+                        name="enquiryType"
+                        className="form-field-select"
+                        value={formData.enquiryType}
+                        onChange={handleChange}
+                      >
+                        <option value="Employer Staffing">Employer Staffing Enquiry (Care Homes, Healthcare, Supported Living)</option>
+                        <option value="Candidate Query">Candidate Career / CV Registration Query</option>
+                        <option value="General Enquiry">General Business Enquiry & Compliance</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-row-2col">
+                    <div className="form-field-group">
+                      <label className="form-field-label" htmlFor="fullName">
+                        Your Full Name <span className="required-star">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="fullName"
+                        name="fullName"
+                        className={`form-field-input ${errors.fullName ? 'form-field-input--error' : ''}`}
+                        placeholder="e.g. David Morrison"
+                        value={formData.fullName}
+                        onChange={handleChange}
+                      />
+                      {errors.fullName && (
+                        <span className="field-error-msg">
+                          <AlertCircle size={13} /> {errors.fullName}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="form-field-group">
+                      <label className="form-field-label" htmlFor="email">
+                        Email Address <span className="required-star">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        className={`form-field-input ${errors.email ? 'form-field-input--error' : ''}`}
+                        placeholder="e.g. d.morrison@example.com"
+                        value={formData.email}
+                        onChange={handleChange}
+                      />
+                      {errors.email && (
+                        <span className="field-error-msg">
+                          <AlertCircle size={13} /> {errors.email}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="form-row-2col">
+                    <div className="form-field-group">
+                      <label className="form-field-label" htmlFor="telephone">
+                        Telephone Number (Optional)
+                      </label>
+                      <input
+                        type="tel"
+                        id="telephone"
+                        name="telephone"
+                        className="form-field-input"
+                        placeholder="e.g. 020 7946 0192"
+                        value={formData.telephone}
+                        onChange={handleChange}
+                      />
+                    </div>
+
+                    <div className="form-field-group">
+                      <label className="form-field-label" htmlFor="subject">
+                        Subject / Role Title <span className="required-star">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="subject"
+                        name="subject"
+                        className={`form-field-input ${errors.subject ? 'form-field-input--error' : ''}`}
+                        placeholder="e.g. Staffing Cover / Candidate Query"
+                        value={formData.subject}
+                        onChange={handleChange}
+                      />
+                      {errors.subject && (
+                        <span className="field-error-msg">
+                          <AlertCircle size={13} /> {errors.subject}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="form-field-group">
+                    <label className="form-field-label" htmlFor="message">
+                      Your Message <span className="required-star">*</span>
+                    </label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      rows={5}
+                      className={`form-field-textarea ${errors.message ? 'form-field-input--error' : ''}`}
+                      placeholder="Provide details about your requirements, vacancy timeline, or enquiry..."
+                      value={formData.message}
+                      onChange={handleChange}
+                    />
+                    {errors.message && (
+                      <span className="field-error-msg">
+                        <AlertCircle size={13} /> {errors.message}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="form-consent-box">
+                    <label className="consent-checkbox-label">
+                      <input
+                        type="checkbox"
+                        name="privacyConsent"
+                        checked={formData.privacyConsent}
+                        onChange={handleChange}
+                      />
+                      <span>
+                        I agree that LICHT Recruitment Services Limited may process this information to reply to my query in accordance with the{' '}
+                        <Link to="/privacy-policy" className="consent-privacy-link">Privacy Policy</Link>.
+                      </span>
+                    </label>
+                    {errors.privacyConsent && (
+                      <span className="field-error-msg" style={{ marginTop: '6px' }}>
+                        <AlertCircle size={13} /> {errors.privacyConsent}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="form-submit-row">
+                    <button 
+                      type="submit" 
+                      className="btn-pill-green contact-submit-btn" 
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 size={18} className="spinner" />
+                          <span>Sending Message...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Submit Message</span>
+                          <Send size={16} />
+                        </>
+                      )}
+                    </button>
+                    <div className="form-privacy-note">
+                      <ShieldCheck size={16} className="text-gold" />
+                      <span>No marketing spam. UK GDPR Protected.</span>
+                    </div>
+                  </div>
+                </form>
+              )}
+            </div>
           </div>
 
-          {/* Right Column: Contact Details & Operating Hours */}
+          {/* Right Column: Direct Channels & Fast-Track Portals */}
           <div className="contact-details-column">
-            <div className="contact-info-card">
-              <h3>Direct Channels</h3>
-              <p>Speak or correspond directly with our recruitment desk.</p>
+            {/* Direct Channels Card */}
+            <div className="contact-side-card">
+              <h3 className="side-card-title">Direct Channels</h3>
+              <p className="side-card-subtitle">Speak or correspond directly with our recruitment desk.</p>
 
-              <div className="info-item">
-                <div className="info-icon">
-                  <Mail size={18} className="gold-icon" />
+              <div className="side-channel-item">
+                <div className="side-channel-icon">
+                  <Mail size={18} className="text-gold" />
                 </div>
                 <div>
-                  <span className="info-label">Email Enquiries</span>
-                  <a href="mailto:enquiries@lichtrecruitment.co.uk" className="info-val info-link">
+                  <span className="side-channel-label">Email Enquiries</span>
+                  <a href="mailto:enquiries@lichtrecruitment.co.uk" className="side-channel-val side-channel-link">
                     enquiries@lichtrecruitment.co.uk
                   </a>
                 </div>
               </div>
 
-              <div className="info-item">
-                <div className="info-icon">
-                  <Clock size={18} className="gold-icon" />
+              <div className="side-channel-item">
+                <div className="side-channel-icon">
+                  <Phone size={18} className="text-gold" />
                 </div>
                 <div>
-                  <span className="info-label">Operating Hours</span>
-                  <span className="info-val">Monday – Friday: 9:00 AM – 5:30 PM (GMT)</span>
-                  <span className="info-sub">Excluding UK Bank Holidays</span>
+                  <span className="side-channel-label">Telephone</span>
+                  <a href="tel:+442079460812" className="side-channel-val side-channel-link">
+                    +44 20 7946 0812
+                  </a>
+                  <span className="side-channel-sub">Mon–Fri: 9:00 AM – 5:30 PM (GMT)</span>
                 </div>
               </div>
 
-              <div className="info-item">
-                <div className="info-icon">
-                  <MapPin size={18} className="gold-icon" />
+              <div className="side-channel-item">
+                <div className="side-channel-icon">
+                  <Clock size={18} className="text-gold" />
                 </div>
                 <div>
-                  <span className="info-label">Geographic Coverage</span>
-                  <span className="info-val">United Kingdom</span>
-                  <span className="info-sub">Supporting clients across England, Wales & Scotland</span>
+                  <span className="side-channel-label">Operating Hours</span>
+                  <span className="side-channel-val">Monday – Friday: 9:00 AM – 5:30 PM</span>
+                  <span className="side-channel-sub">Excluding UK Bank Holidays</span>
+                </div>
+              </div>
+
+              <div className="side-channel-item">
+                <div className="side-channel-icon">
+                  <MapPin size={18} className="text-gold" />
+                </div>
+                <div>
+                  <span className="side-channel-label">Geographic Coverage</span>
+                  <span className="side-channel-val">London & UK Wide</span>
+                  <span className="side-channel-sub">Supporting care homes and healthcare providers across England, Wales & Scotland</span>
                 </div>
               </div>
             </div>
 
-            <div className="contact-info-card alternative-actions-card">
-              <h3>Fast-Track Portals</h3>
-              <p>Depending on your goal, you may prefer our dedicated portals:</p>
+            {/* Fast-Track Portals Card */}
+            <div className="contact-side-card contact-portals-card">
+              <h3 className="side-card-title">Fast-Track Portals</h3>
+              <p className="side-card-subtitle">Looking for specialized services? Access our dedicated portals:</p>
               
-              <div className="action-buttons-stack">
-                <a href="/employers" className="portal-btn">
-                  <Building2 size={18} className="gold-icon" />
-                  <div>
-                    <span className="p-title">Employer Recruitment Portal</span>
-                    <span className="p-desc">Submit comprehensive role specifications</span>
+              <div className="side-portals-stack">
+                <Link to="/employer" className="portal-action-box">
+                  <div className="portal-action-icon">
+                    <Building2 size={20} className="text-gold" />
                   </div>
-                </a>
+                  <div className="portal-action-info">
+                    <span className="portal-action-title">Employer Portal & Post a Job</span>
+                    <span className="portal-action-desc">Request shifts, review candidate profiles & talent pool</span>
+                  </div>
+                  <ArrowRight size={16} className="portal-action-arrow" />
+                </Link>
 
-                <a href="/submit-cv" className="portal-btn">
-                  <Users size={18} className="gold-icon" />
-                  <div>
-                    <span className="p-title">Submit Candidate CV</span>
-                    <span className="p-desc">Upload documents for candidate registration</span>
+                <Link to="/opportunities" className="portal-action-box">
+                  <div className="portal-action-icon">
+                    <Briefcase size={20} className="text-gold" />
                   </div>
-                </a>
+                  <div className="portal-action-info">
+                    <span className="portal-action-title">Browse Vacancies & Jobs</span>
+                    <span className="portal-action-desc">Explore verified nurse, carer, and clinical openings</span>
+                  </div>
+                  <ArrowRight size={16} className="portal-action-arrow" />
+                </Link>
+
+                <Link to="/signup" className="portal-action-box">
+                  <div className="portal-action-icon">
+                    <Users size={20} className="text-gold" />
+                  </div>
+                  <div className="portal-action-info">
+                    <span className="portal-action-title">Candidate Registration</span>
+                    <span className="portal-action-desc">Create your profile, upload your CV & get placed</span>
+                  </div>
+                  <ArrowRight size={16} className="portal-action-arrow" />
+                </Link>
               </div>
             </div>
           </div>
@@ -356,3 +426,4 @@ export const Contact: React.FC = () => {
     </div>
   );
 };
+export default Contact;

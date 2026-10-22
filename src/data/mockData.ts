@@ -1,145 +1,139 @@
 export interface Vacancy {
   id: string;
   title: string;
-  sector: 'Care Homes' | 'Healthcare' | 'Corporate';
+  sector: 'Care homes' | 'Healthcare' | 'Supported living' | 'Corporate';
   location: string;
-  type: 'Full-time' | 'Part-time' | 'Contract' | 'Permanent';
-  salary: string;
-  postedDate: string;
-  description: string;
-  essentialRequirements: string[];
-  desirableRequirements: string[];
-  responsibilities: string[];
+  type: 'Temporary' | 'Permanent' | 'Full time' | 'Part time';
+  shift: string;
+  contract: string;
+  workingPattern: string;
+  pay: string;
+  summary: string;
+  roleMeaning: string;
+  whatRoleInvolves: string[];
+  whatYouBring: string[];
+  beforeYouApply: string;
+  salary?: string;
+  postedDate?: string;
+  description?: string;
+  essentialRequirements?: string[];
+  desirableRequirements?: string[];
+  responsibilities?: string[];
+  image?: string;
   isDemo?: boolean;
 }
 
 export const SAMPLE_VACANCIES: Vacancy[] = [
   {
-    id: 'licht-vac-01',
-    title: 'Senior Care Assistant',
-    sector: 'Care Homes',
-    location: 'Greater London / Surrey',
-    type: 'Full-time',
-    salary: '£26,000 - £29,500 per annum (Subject to confirmation)',
-    postedDate: '14 Oct 2026',
-    description: 'Supporting care home residents with personal care, medication administration support under supervision, and leading junior care staff during shift handovers.',
-    essentialRequirements: [
-      'NVQ / RQF Level 3 in Health and Social Care (or working towards)',
-      'Minimum 12 months proven experience within a residential or nursing care home',
-      'Enhanced DBS check clearance (or eligibility to obtain)',
-      'Compassionate, communicative and reliable professional conduct'
+    id: 'CA-101',
+    title: 'Care Assistant',
+    sector: 'Care homes',
+    location: 'London',
+    type: 'Temporary',
+    contract: 'Temporary',
+    shift: 'Day & night shifts',
+    workingPattern: 'Day & night shifts',
+    pay: 'Pay discussed on application',
+    summary: 'Bring a compassionate approach to supporting residents with everyday care and wellbeing.',
+    roleMeaning: 'As a Care Assistant, you would support residents with day-to-day care, comfort and wellbeing. This example role is suited to someone who brings a patient, respectful approach and enjoys working as part of a team.',
+    whatRoleInvolves: [
+      'Supporting personal care while respecting privacy, dignity and choice.',
+      'Helping residents with meals, mobility and daily routines.',
+      'Working with the care team and communicating changes in wellbeing.',
+      'Following care plans, recording information and working within agreed procedures.'
     ],
-    desirableRequirements: [
-      'Medication administration training certification',
-      'Experience mentoring new care assistants'
+    whatYouBring: [
+      'A compassionate, dependable and respectful approach.',
+      'Clear communication and the ability to work collaboratively.',
+      'Relevant care experience; requirements are discussed for each placement.',
+      'Willingness to complete role-relevant checks and provide documentation.'
     ],
-    responsibilities: [
-      'Provide compassionate person-centred support to residents',
-      'Maintain clear daily care records and handover notes',
-      'Support care coordinators with shift coordination'
-    ],
+    beforeYouApply: 'We would discuss your experience, availability and the requirements of the setting. Any offer or placement is subject to the relevant recruitment checks, including right-to-work checks and, where applicable, references and DBS requirements.',
+    image: '/assets/care_home_sector.jpg',
     isDemo: true
   },
   {
-    id: 'licht-vac-02',
-    title: 'Healthcare Support Worker',
-    sector: 'Healthcare',
-    location: 'Birmingham & West Midlands',
-    type: 'Full-time',
-    salary: '£12.80 - £14.20 per hour (Indicative rate)',
-    postedDate: '12 Oct 2026',
-    description: 'Providing essential healthcare support in clinical day centres and rehabilitation units in accordance with agreed employer standards.',
-    essentialRequirements: [
-      'Care Certificate or equivalent health and social care qualification',
-      'Knowledge of infection control, moving and handling protocols',
-      'Satisfactory professional references covering minimum 2 years',
-      'Right to work in the United Kingdom'
-    ],
-    desirableRequirements: [
-      'Phlebotomy or basic clinical observation skills',
-      'Flexible availability for rotational rotas'
-    ],
-    responsibilities: [
-      'Assist multidisciplinary teams with routine patient care',
-      'Accurately monitor and log patient vital signs',
-      'Maintain hygienic, safe healthcare environments'
-    ],
-    isDemo: true
-  },
-  {
-    id: 'licht-vac-03',
-    title: 'Corporate Operations Administrator',
-    sector: 'Corporate',
-    location: 'Central London (Hybrid)',
+    id: 'SW-102',
+    title: 'Support Worker',
+    sector: 'Supported living',
+    location: 'Birmingham',
     type: 'Permanent',
-    salary: '£28,000 - £33,000 per annum (Indicative)',
-    postedDate: '10 Oct 2026',
-    description: 'Managing office workflow, supplier coordination, client scheduling, and documentation processing for a professional corporate organisation.',
-    essentialRequirements: [
-      'Prior office administration or operations support experience',
-      'Proficiency in MS Office 365, database entry, and diary management',
-      'Strong written and verbal communication in business English',
-      'Excellent organisational and prioritisation capabilities'
+    contract: 'Permanent',
+    shift: 'Full time',
+    workingPattern: 'Full time',
+    pay: 'Pay discussed on application',
+    summary: 'Support people to build independence and take an active part in their daily lives.',
+    roleMeaning: 'As a Support Worker in supported living environments, you will empower individuals with learning disabilities or autism to develop life skills, achieve personal goals, and engage actively within their community.',
+    whatRoleInvolves: [
+      'Encouraging and assisting individuals with daily living tasks and community activities.',
+      'Promoting independence, communication skills, and personal decision-making.',
+      'Collaborating with families, healthcare practitioners, and support team coordinators.',
+      'Maintaining accurate progress notes and adhering to personalised support guidelines.'
     ],
-    desirableRequirements: [
-      'Experience in HR coordination or recruitment administration',
-      'Educated to degree level or equivalent professional qualification'
+    whatYouBring: [
+      'A patient, supportive attitude with strong interpersonal skills.',
+      'Experience in supported living or social care environments.',
+      'Reliable problem-solving skills and calm demeanour in changing situations.',
+      'Commitment to mandatory training and compliance checks.'
     ],
-    responsibilities: [
-      'Coordinate executive meetings and client correspondence',
-      'Maintain compliant digital records and operational reports',
-      'Act as a welcoming first point of contact for corporate enquiries'
-    ],
+    beforeYouApply: 'We discuss placement requirements and working hours prior to interviews. All appointments are subject to satisfactory references and Enhanced DBS clearance.',
+    image: '/assets/care_home_sector.jpg',
     isDemo: true
   },
   {
-    id: 'licht-vac-04',
-    title: 'Residential Care Assistant',
-    sector: 'Care Homes',
-    location: 'Manchester & Greater Manchester',
-    type: 'Full-time',
-    salary: '£23,500 - £25,000 per annum',
-    postedDate: '08 Oct 2026',
-    description: 'Delivering hands-on daily living support, dignity, and companionship to elderly residents in a well-regarded care home setting.',
-    essentialRequirements: [
-      'Genuine passion for elder care and supporting vulnerable adults',
-      'Valid UK Right to Work and Enhanced DBS eligibility',
-      'Willingness to undertake statutory care training and qualifications'
+    id: 'HC-103',
+    title: 'Healthcare Assistant',
+    sector: 'Healthcare',
+    location: 'Manchester',
+    type: 'Temporary',
+    contract: 'Temporary',
+    shift: 'Flexible shifts',
+    workingPattern: 'Flexible shifts',
+    pay: 'Pay discussed on application',
+    summary: 'Contribute to a patient-centred team in a professional healthcare environment.',
+    roleMeaning: 'In this Healthcare Assistant position, you will work alongside registered nursing personnel in clinical wards and medical settings, delivering attentive patient support and maintaining high standards of care hygiene.',
+    whatRoleInvolves: [
+      'Assisting patients with routine personal care and mobility support.',
+      'Observing and accurately recording clinical vital signs under nurse supervision.',
+      'Maintaining clean, sterilised and orderly clinical ward environments.',
+      'Communicating sensitively with patients, relatives, and multidisciplinary healthcare teams.'
     ],
-    desirableRequirements: [
-      'Previous care home or domiciliary care experience',
-      'Driver with valid clean UK driving licence'
+    whatYouBring: [
+      'Care Certificate or proven healthcare experience in an NHS or clinical care setting.',
+      'Clear understanding of infection control and patient confidentiality (Caldicott principles).',
+      'Punctual, dependable approach to flexible shift patterns.',
+      'Enhanced DBS check and verified professional references.'
     ],
-    responsibilities: [
-      'Support residents with mobility, meals, and social activities',
-      'Report any health changes promptly to the duty nurse or manager',
-      'Promote resident independence, choice, and dignity'
-    ],
+    beforeYouApply: 'All candidates must hold valid UK right-to-work verification and complete our clinical compliance checks before assignment allocation.',
+    image: '/assets/healthcare_sector.jpg',
     isDemo: true
   },
   {
-    id: 'licht-vac-05',
-    title: 'Customer Service & Client Support Specialist',
+    id: 'OA-104',
+    title: 'Office Administrator',
     sector: 'Corporate',
-    location: 'Leeds / Remote Hybrid',
-    type: 'Full-time',
-    salary: '£25,000 - £28,000 per annum',
-    postedDate: '05 Oct 2026',
-    description: 'Handling client accounts, inbound business enquiries, service delivery coordination, and issue resolution for enterprise clients.',
-    essentialRequirements: [
-      '2+ years in customer service, business client support, or account coordination',
-      'Confident telephone manner and clear business email writing skills',
-      'Ability to thrive in a structured, fast-paced team environment'
+    location: 'Bristol',
+    type: 'Permanent',
+    contract: 'Permanent',
+    shift: 'Full time',
+    workingPattern: 'Full time',
+    pay: 'Pay discussed on application',
+    summary: 'Keep a busy team organised with thoughtful administrative and operational support.',
+    roleMeaning: 'As an Office Administrator, you will be the backbone of daily office operations, providing smooth clerical coordination, client visitor reception, and executive support across our corporate partner organization.',
+    whatRoleInvolves: [
+      'Coordinating executive diaries, client appointments, and meeting room logistics.',
+      'Managing business email correspondence, telephone queries, and mail distribution.',
+      'Maintaining accurate digital databases, spreadsheets, and document filing systems.',
+      'Liaising with external suppliers, office contractors, and internal department heads.'
     ],
-    desirableRequirements: [
-      'CRM software experience (Salesforce, HubSpot, or Zendesk)',
-      'Conflict resolution and complaint handling certifications'
+    whatYouBring: [
+      'Solid administrative or customer service experience in a corporate office environment.',
+      'Strong proficiency with Microsoft Office 365 (Word, Excel, Outlook, Teams).',
+      'Professional telephone manner and articulate written communication.',
+      'Meticulous attention to detail and sound time management capabilities.'
     ],
-    responsibilities: [
-      'Promptly resolve incoming corporate client enquiries',
-      'Collaborate with account directors to uphold service level agreements',
-      'Prepare weekly client service activity reports'
-    ],
+    beforeYouApply: 'Shortlisted candidates will be invited for an initial video or face-to-face consultation. Professional references covering the last 2 years will be required.',
+    image: '/assets/corporate_sector.jpg',
     isDemo: true
   }
 ];
@@ -147,45 +141,22 @@ export const SAMPLE_VACANCIES: Vacancy[] = [
 export const FREQUENTLY_ASKED_QUESTIONS = [
   {
     question: 'What recruitment services do you provide?',
-    answer: 'LICHT supports recruitment across care homes, healthcare and corporate environments. The precise service scope is agreed for each requirement.'
+    answer: 'LICHT supports recruitment across care homes, healthcare, supported living, and corporate environments. The precise service scope is agreed for each requirement.'
   },
   {
     question: 'How can an employer request support?',
-    answer: 'Employers can submit a direct recruitment enquiry through our Employers portal or Contact page, detailing vacancy requirements, location and timelines so we can discuss the most appropriate support.'
+    answer: 'Employers can submit a direct recruitment enquiry through our Request Staff form or Contact page, detailing vacancy requirements, location, and timelines so we can discuss the most appropriate support.'
   },
   {
     question: 'Can candidates submit their CVs?',
-    answer: 'Yes, candidates can submit their CVs through our Submit Your CV page for consideration against current and future matching vacancies across our client network.'
+    answer: 'Yes, candidates can submit their CVs through our Find a Job or Send Your CV page for consideration against current and future matching vacancies across our client network.'
   },
   {
     question: 'How are candidates assessed?',
     answer: 'Candidates are screened based on skills, verified experience, eligibility to work, professional references, and sector-specific compliance standards such as Enhanced DBS checks.'
   },
   {
-    question: 'Do you offer temporary, permanent or remote recruitment?',
-    answer: 'We provide recruitment solutions tailored to employer requirements across permanent, temporary, and agreed placement models.'
-  }
-];
-
-export const RECRUITMENT_PROCESS_STEPS = [
-  {
-    step: '01',
-    title: 'Discuss Your Requirements',
-    description: 'We explore your staffing needs, vacancy specifics, essential qualifications, shift patterns, culture fit, and target timeline.'
-  },
-  {
-    step: '02',
-    title: 'Agree Recruitment Approach',
-    description: 'We confirm the scope of service, role profile, candidate screening criteria, terms of business, and agreed communication milestones.'
-  },
-  {
-    step: '03',
-    title: 'Identify & Screen Candidates',
-    description: 'We match candidates against verified criteria, evaluate relevant experience, review references, and present qualified profiles.'
-  },
-  {
-    step: '04',
-    title: 'Coordinate & Support Placement',
-    description: 'We schedule interviews, facilitate two-way feedback, and assist through offer management and placement onboarding.'
+    question: 'Do you offer temporary, permanent or ongoing staffing support?',
+    answer: 'We provide recruitment solutions tailored to employer requirements across permanent placements, temporary cover, and ongoing workforce arrangements.'
   }
 ];

@@ -1,79 +1,70 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { BrandLogo } from '../common/BrandLogo';
 import './Footer.css';
 
-export function Footer() {
-  const year = new Date().getFullYear();
-
+export const Footer: React.FC = () => {
   return (
-    <footer className="figma-footer" role="contentinfo">
+    <footer className="global-footer" role="contentinfo">
       <div className="container">
-        {/* Main Footer Grid */}
-        <div className="figma-footer-grid">
-          {/* Brand Column */}
-          <div className="figma-footer-brand-col">
-            <Link to="/" className="figma-footer-logo-link" aria-label="LICHT Recruitment Services – Home">
-              <img 
-                src="/assets/recruitment_logo.png" 
-                alt="LICHT Recruitment Services Limited" 
-                className="figma-footer-logo-img"
-              />
+        {/* Top 4-column layout */}
+        <div className="global-footer__top">
+          {/* Brand Info */}
+          <div className="global-footer__brand">
+            <Link to="/" aria-label="LICHT Recruitment Services Limited">
+              <BrandLogo variant="light" />
             </Link>
-
-            <p className="figma-footer-desc">
-              Professional recruitment support for care homes, healthcare providers and corporate organisations.
+            <p className="global-footer__slogan">
+              Reliable People. Professional Recruitment.
             </p>
-
-            <p className="figma-footer-note">
-              Contact details and registered company information will be published once verified.
+            <p className="global-footer__tagline">
+              People-first recruitment for care, healthcare, supported living and corporate teams.
             </p>
           </div>
 
-          {/* Company Column */}
-          <div className="figma-footer-col">
-            <h4 className="figma-footer-heading">Company</h4>
-            <ul className="figma-footer-links" role="list">
+          {/* For employers */}
+          <div className="global-footer__col">
+            <h4 className="global-footer__heading">For employers</h4>
+            <ul className="global-footer__list" role="list">
+              <li><Link to="/services">Our services</Link></li>
+              <li><Link to="/services">Sectors we support</Link></li>
+              <li><Link to="/employers">Request staff</Link></li>
+            </ul>
+          </div>
+
+          {/* For candidates */}
+          <div className="global-footer__col">
+            <h4 className="global-footer__heading">For candidates</h4>
+            <ul className="global-footer__list" role="list">
+              <li><Link to="/opportunities">Browse jobs</Link></li>
+              <li><Link to="/candidates">How to apply</Link></li>
+              <li><Link to="/submit-cv">Send your CV</Link></li>
+            </ul>
+          </div>
+
+          {/* LICHT */}
+          <div className="global-footer__col">
+            <h4 className="global-footer__heading">LICHT</h4>
+            <ul className="global-footer__list" role="list">
               <li><Link to="/about">About us</Link></li>
-              <li><Link to="/employers">Employers</Link></li>
-              <li><Link to="/candidates">Candidates</Link></li>
-              <li><Link to="/contact">Contact</Link></li>
-            </ul>
-          </div>
-
-          {/* Services Column */}
-          <div className="figma-footer-col">
-            <h4 className="figma-footer-heading">Services</h4>
-            <ul className="figma-footer-links" role="list">
-              <li><Link to="/services/care-homes">Care home recruitment</Link></li>
-              <li><Link to="/services/healthcare">Healthcare recruitment</Link></li>
-              <li><Link to="/services/corporate">Corporate recruitment</Link></li>
-            </ul>
-          </div>
-
-          {/* Information Column */}
-          <div className="figma-footer-col">
-            <h4 className="figma-footer-heading">Information</h4>
-            <ul className="figma-footer-links" role="list">
-              <li><Link to="/opportunities">Opportunities</Link></li>
-              <li><Link to="/submit-cv">Submit your CV</Link></li>
-              <li><Link to="/privacy-policy">Privacy policy</Link></li>
-              <li><Link to="/cookie-policy">Cookie policy</Link></li>
-              <li><Link to="/terms">Terms</Link></li>
+              <li><Link to="/about">Our approach</Link></li>
+              <li><Link to="/contact">Contact us</Link></li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="figma-footer-bottom">
-          <p className="figma-footer-copyright">
-            &copy; {year} LICHT Recruitment Services Limited.
+        {/* Bottom divider and legal row */}
+        <div className="global-footer__bottom">
+          <p className="global-footer__copyright">
+            &copy; 2026 LICHT RECRUITMENT SERVICES LIMITED
           </p>
-          <p className="figma-footer-tagline">
-            Reliable People. Professional Recruitment.
-          </p>
+          <div className="global-footer__legal-links">
+            <Link to="/privacy-policy">Privacy policy</Link>
+            <Link to="/cookie-policy">Cookie preferences</Link>
+            <Link to="/terms">Accessibility</Link>
+          </div>
         </div>
       </div>
     </footer>
   );
-}
-
-export default Footer;
+};

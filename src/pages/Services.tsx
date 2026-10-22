@@ -1,170 +1,211 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Building2, 
-  HeartPulse, 
-  Home as HomeIcon, 
-  ShieldCheck, 
-  CheckCircle2, 
-  ArrowRight,
-  Clock,
-  Briefcase,
-  Users
-} from 'lucide-react';
-import { ServiceCard } from '../components/recruitment/ServiceCard';
+import { Clock, Search, Users } from 'lucide-react';
 import './Services.css';
 
 export const Services: React.FC = () => {
   return (
     <div className="services-page">
-      {/* Services Hero */}
+      {/* 1. Header & Hero */}
       <section className="services-hero">
-        <div className="container text-center max-w-800">
-          <div className="figma-hero-eyebrow center-eyebrow">
-            <span className="figma-gold-dash" />
-            <span>RECRUITMENT SERVICES</span>
-          </div>
-          <h1 className="services-hero-title">
-            Recruitment Solutions for <br />
-            <span className="hero-text-gold">Different Workforce Needs</span>
+        <div className="container">
+          <nav className="figma-breadcrumb" aria-label="Breadcrumb">
+            <Link to="/">Home</Link>
+            <span className="figma-breadcrumb-separator">/</span>
+            <span>Services & sectors</span>
+          </nav>
+
+          <div className="figma-eyebrow">Services & sectors</div>
+          <h1 className="services-hero__title">
+            People who fit. Support that lasts.
           </h1>
-          <p className="services-hero-lead">
-            Different sectors require distinct recruitment approaches. LICHT Recruitment Services Limited provides tailored recruitment support across care homes, healthcare, and corporate environments.
+          <p className="services-hero__subtitle">
+            Recruitment shaped around your setting, your responsibilities and the people you serve.
           </p>
         </div>
       </section>
 
-      {/* 3 Core Sectors In-depth */}
-      <section className="section section-dark">
+      {/* 2. Our Sector Focus */}
+      <section className="services-sector-focus">
         <div className="container">
-          <div className="sectors-grid">
-            <ServiceCard 
-              title="Care Home Recruitment"
-              tagline="RESIDENTIAL & NURSING CARE"
-              description="Sourcing vetted, compassionate care assistants, senior carers, and support staff for elderly and residential care providers."
-              imageSrc="/assets/care_home_sector.jpg"
-              icon={<HomeIcon size={24} />}
-              roles={[
-                'Care Assistants & Carers',
-                'Senior Care Assistants',
-                'Night Shift Care Workers',
-                'Dementia Care Specialists'
-              ]}
-              linkTo="/services/care-homes"
-              ctaText="Care Recruitment Details"
-            />
-
-            <ServiceCard 
-              title="Healthcare Recruitment"
-              tagline="HEALTHCARE FACILITIES"
-              description="Clinical and non-clinical workforce solutions for healthcare providers requiring qualified, verified personnel."
-              imageSrc="/assets/healthcare_sector.jpg"
-              icon={<HeartPulse size={24} />}
-              roles={[
-                'Healthcare Support Workers',
-                'Clinic & Ward Support Staff',
-                'Nursing Professionals (Where Qualified)',
-                'Medical Administrative Staff'
-              ]}
-              linkTo="/services/healthcare"
-              ctaText="Healthcare Details"
-            />
-
-            <ServiceCard 
-              title="Corporate Recruitment"
-              tagline="BUSINESS OPERATIONS & SUPPORT"
-              description="Connecting commercial organisations with skilled professionals across administration, operations, customer relations, and business support."
-              imageSrc="/assets/corporate_sector.jpg"
-              icon={<Building2 size={24} />}
-              roles={[
-                'Office & Facilities Managers',
-                'Customer Experience Teams',
-                'Operations Coordinators',
-                'Executive Support Staff'
-              ]}
-              linkTo="/services/corporate"
-              ctaText="Corporate Details"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Recruitment Engagement Models */}
-      <section className="section section-soft models-section">
-        <div className="container">
-          <div className="section-header-block text-center max-w-800">
-            <div className="eyebrow">FLEXIBLE ENGAGEMENT</div>
-            <h2 className="section-title">Flexible Recruitment Models</h2>
-            <div className="gold-line center-gold-line" />
-            <p className="section-description">
-              We structure our recruitment delivery models to match the operational cadence and headcount planning of your organisation.
-            </p>
-          </div>
-
-          <div className="models-grid">
-            <div className="model-card">
-              <div className="model-icon">
-                <Briefcase size={26} className="gold-icon" />
-              </div>
-              <h3>Permanent Placements</h3>
-              <p>
-                End-to-end recruitment for core headcount roles. We handle vacancy profiling, candidate sourcing, initial screening, interview coordination, and offer management.
+          <div className="services-focus-grid">
+            {/* Left Column: Heading + Photo */}
+            <div className="services-focus-left">
+              <div className="figma-eyebrow">Our sector focus</div>
+              <h2 className="services-section-title">
+                An understanding of your world.
+              </h2>
+              <p className="services-focus-desc">
+                We bring a considered approach to every brief, from an individual care role to an essential business appointment.
               </p>
-              <ul className="model-bullets">
-                <li><CheckCircle2 size={14} className="gold-icon" /> Long-term stability & retention</li>
-                <li><CheckCircle2 size={14} className="gold-icon" /> In-depth cultural alignment</li>
-                <li><CheckCircle2 size={14} className="gold-icon" /> Agreed rebate / replacement terms</li>
-              </ul>
+              <div className="services-focus-photo-wrap">
+                <img 
+                  src="/assets/healthcare_sector.jpg" 
+                  alt="Dedicated healthcare team in hospital corridor" 
+                  className="services-focus-photo"
+                />
+              </div>
             </div>
 
-            <div className="model-card">
-              <div className="model-icon">
-                <Clock size={26} className="gold-icon" />
+            {/* Right Column: 4 Sectors Interactive List */}
+            <div className="services-focus-right">
+              <div className="sector-row-card">
+                <div className="sector-row-card__num">01</div>
+                <div className="sector-row-card__main">
+                  <div className="sector-row-card__header">
+                    <h3 className="sector-row-card__title">Care homes</h3>
+                    <span className="arrow-up-right sector-row-arrow">↗</span>
+                  </div>
+                  <p className="sector-row-card__desc">
+                    Consistent support for residential and nursing settings.
+                  </p>
+                  <div className="sector-row-card__tags">
+                    Care assistants · Senior carers · Domestic support
+                  </div>
+                </div>
               </div>
-              <h3>Temporary & Shift Cover</h3>
-              <p>
-                Responsive workforce supply for planned leaves, seasonal surges, or urgent shift requirements in residential care and healthcare environments.
-              </p>
-              <ul className="model-bullets">
-                <li><CheckCircle2 size={14} className="gold-icon" /> Rapid deployment capability</li>
-                <li><CheckCircle2 size={14} className="gold-icon" /> Fully pre-screened & DBS cleared</li>
-                <li><CheckCircle2 size={14} className="gold-icon" /> Flexible rotas and coverage</li>
-              </ul>
-            </div>
 
-            <div className="model-card">
-              <div className="model-icon">
-                <Users size={26} className="gold-icon" />
+              <div className="sector-row-card">
+                <div className="sector-row-card__num">02</div>
+                <div className="sector-row-card__main">
+                  <div className="sector-row-card__header">
+                    <h3 className="sector-row-card__title">Healthcare providers</h3>
+                    <span className="arrow-up-right sector-row-arrow">↗</span>
+                  </div>
+                  <p className="sector-row-card__desc">
+                    People who understand professional, patient-centred environments.
+                  </p>
+                  <div className="sector-row-card__tags">
+                    Healthcare assistants · Registered nurses · Clinical support
+                  </div>
+                </div>
               </div>
-              <h3>Fixed-Term Contracts</h3>
-              <p>
-                Interim recruitment for maternity covers, project launches, facility expansions, or transitional workforce restructuring.
-              </p>
-              <ul className="model-bullets">
-                <li><CheckCircle2 size={14} className="gold-icon" /> Defined contract milestones</li>
-                <li><CheckCircle2 size={14} className="gold-icon" /> Immediate operational impact</li>
-                <li><CheckCircle2 size={14} className="gold-icon" /> Option to transition to permanent</li>
-              </ul>
+
+              <div className="sector-row-card">
+                <div className="sector-row-card__num">03</div>
+                <div className="sector-row-card__main">
+                  <div className="sector-row-card__header">
+                    <h3 className="sector-row-card__title">Supported living</h3>
+                    <span className="arrow-up-right sector-row-arrow">↗</span>
+                  </div>
+                  <p className="sector-row-card__desc">
+                    Thoughtful matching around independence and individual needs.
+                  </p>
+                  <div className="sector-row-card__tags">
+                    Support workers · Team leaders · Service support
+                  </div>
+                </div>
+              </div>
+
+              <div className="sector-row-card">
+                <div className="sector-row-card__num">04</div>
+                <div className="sector-row-card__main">
+                  <div className="sector-row-card__header">
+                    <h3 className="sector-row-card__title">Corporate organisations</h3>
+                    <span className="arrow-up-right sector-row-arrow">↗</span>
+                  </div>
+                  <p className="sector-row-card__desc">
+                    Practical recruitment for the teams behind your business.
+                  </p>
+                  <div className="sector-row-card__tags">
+                    Administration · Reception · Operations · Business support
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Employer Banner */}
-      <section className="section section-dark text-center">
-        <div className="container max-w-800">
-          <h2>Looking to Discuss a Specific Vacancy?</h2>
-          <div className="gold-line center-gold-line" />
-          <p className="lead-paragraph">
-            Submit your role requirements or contact a recruitment consultant directly to discuss terms of business, candidate availability, and scheduling.
+      {/* 3. The Right Arrangement */}
+      <section className="services-arrangements">
+        <div className="container">
+          <div className="figma-eyebrow">The right arrangement</div>
+          <h2 className="services-section-title services-arrangements__heading">
+            Flexible needs. Considered solutions.
+          </h2>
+
+          <div className="arrangements-grid">
+            {/* Card 1: Temporary staffing */}
+            <div className="arrangement-card">
+              <div className="arrangement-card__icon">
+                <Clock size={24} color="#204836" strokeWidth={1.8} />
+              </div>
+              <h3 className="arrangement-card__title">Temporary staffing</h3>
+              <p className="arrangement-card__desc">
+                Support for changing needs, planned absences and short-term requirements.
+              </p>
+              <Link to="/employers" className="btn-pill-outline arrangement-card__btn">
+                Discuss cover <span className="arrow-up-right">↗</span>
+              </Link>
+            </div>
+
+            {/* Card 2: Permanent recruitment */}
+            <div className="arrangement-card">
+              <div className="arrangement-card__icon">
+                <Search size={24} color="#204836" strokeWidth={1.8} />
+              </div>
+              <h3 className="arrangement-card__title">Permanent recruitment</h3>
+              <p className="arrangement-card__desc">
+                Find people ready to become part of your organisation for the long term.
+              </p>
+              <Link to="/employers" className="btn-pill-outline arrangement-card__btn">
+                Discuss a vacancy <span className="arrow-up-right">↗</span>
+              </Link>
+            </div>
+
+            {/* Card 3: Ongoing staffing support */}
+            <div className="arrangement-card">
+              <div className="arrangement-card__icon">
+                <Users size={24} color="#204836" strokeWidth={1.8} />
+              </div>
+              <h3 className="arrangement-card__title">Ongoing staffing support</h3>
+              <p className="arrangement-card__desc">
+                A conversational approach for recurring or evolving workforce needs.
+              </p>
+              <Link to="/employers" className="btn-pill-outline arrangement-card__btn">
+                Plan your staffing <span className="arrow-up-right">↗</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. A Responsible Approach */}
+      <section className="services-responsible">
+        <div className="container">
+          <div className="services-responsible-grid">
+            <div className="services-responsible-left">
+              <div className="figma-eyebrow">A responsible approach</div>
+              <h2 className="services-section-title">
+                Careful matching.<br />Clear expectations.
+              </h2>
+            </div>
+            <div className="services-responsible-right">
+              <p className="services-responsible-text">
+                Role requirements and relevant checks should be clear from the start. We discuss experience, documentation and setting-specific needs as part of the recruitment conversation.
+              </p>
+              <Link to="/contact" className="home-inline-link">
+                Ask us about the recruitment process for your service.
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Bottom Call to Action */}
+      <section className="figma-cta-section">
+        <div className="container">
+          <h2 className="figma-cta-headline">Tell us who you're looking for.</h2>
+          <p className="figma-cta-subhead">
+            Share your role, your setting and the support you need.
           </p>
-          <div className="closing-btn-group">
-            <Link to="/employers" className="btn btn-primary">
-              <span>Submit Employer Enquiry</span>
-              <ArrowRight size={16} />
+          <div className="figma-cta-btn-row">
+            <Link to="/employers" className="btn-pill-green">
+              Request staff <span className="arrow-up-right">↗</span>
             </Link>
-            <Link to="/contact" className="btn btn-secondary">
-              <span>Contact Recruitment Team</span>
+            <Link to="/opportunities" className="btn-pill-outline">
+              Explore opportunities <span className="arrow-up-right">↗</span>
             </Link>
           </div>
         </div>

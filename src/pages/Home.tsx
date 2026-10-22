@@ -1,383 +1,359 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  ArrowRight, 
-  ArrowUpRight,
+  Users, 
+  ArrowUpRight, 
   HeartHandshake, 
   Stethoscope, 
-  Building2, 
-  ClipboardCheck, 
-  Search, 
-  MessageSquare, 
-  Users
+  Building2,
+  Sparkles
 } from 'lucide-react';
-import { Accordion } from '../components/common/Accordion';
-import { FREQUENTLY_ASKED_QUESTIONS } from '../data/mockData';
 import './Home.css';
 
 export const Home: React.FC = () => {
   return (
-    <div className="home-page">
-      {/* 1. Hero Section (Figma Screenshot 1) */}
-      <section className="figma-hero-section">
-        <div className="container figma-hero-container">
-          <div className="figma-hero-left">
-            <div className="figma-hero-eyebrow">
-              <span className="figma-gold-dash" />
-              <span>RECRUITMENT SOLUTIONS</span>
-            </div>
-
-            <h1 className="figma-hero-headline">
-              Reliable People.<br />
-              <span className="hero-text-gold">Professional<br />Recruitment.</span>
+    <div className="home-view">
+      {/* 1. ARCHITECTURAL HERO SECTION */}
+      <section className="home-hero">
+        <div className="container">
+          <div className="home-hero__header">
+            <div className="figma-eyebrow">People first, possibilities ahead.</div>
+            <h1 className="home-hero__title">
+              The right people.<br />
+              <span className="hero-title-accent">A brighter way forward.</span>
             </h1>
-
-            <p className="figma-hero-subheading">
-              LICHT Recruitment Services Limited helps care homes, healthcare providers and corporate organisations connect with suitable people for their workforce needs.
+            <p className="home-hero__subtitle">
+              <strong>Reliable People. Professional Recruitment.</strong><br />
+              Connecting organisations with dependable talent, and people with opportunities that matter.
             </p>
 
-            <div className="figma-hero-cta-group">
-              <Link to="/employers" className="btn-figma-primary">
-                <span>Request Recruitment Support</span>
-                <ArrowRight size={17} />
+            <div className="home-hero__actions">
+              <Link to="/employers" className="btn-pill-green">
+                I'm looking for staff <span className="arrow-up-right">↗</span>
               </Link>
-
-              <Link to="/services" className="btn-figma-secondary">
-                <span>Explore Our Services</span>
-                <ArrowRight size={17} />
+              <Link to="/opportunities" className="btn-pill-outline">
+                I'm looking for work <span className="arrow-up-right">↗</span>
               </Link>
             </div>
           </div>
 
-          <div className="figma-hero-right">
-            <div className="figma-hero-image-wrapper">
-              <div className="figma-hero-gold-accent" />
+          {/* 3-Column Hero Visual Grid */}
+          <div className="home-hero__grid">
+            {/* Col 1: Care resident & assistant photo */}
+            <div className="hero-card hero-card--photo">
               <img 
-                src="/assets/hero_recruitment.jpg" 
-                alt="LICHT Professional Recruitment Consultation" 
-                className="figma-hero-image"
+                src="/assets/hero_care_companion.jpg" 
+                alt="Compassionate care assistant supporting resident" 
+                className="hero-card__img"
+              />
+              <div className="hero-card__photo-overlay">
+                <span className="hero-card__photo-tag">Care & Compassion</span>
+              </div>
+            </div>
+
+            {/* Col 2: Dark green card */}
+            <div className="hero-card hero-card--green">
+              <div className="hero-card__icon-wrap">
+                <Users size={26} strokeWidth={1.8} />
+              </div>
+              <div className="hero-card__badge-eyebrow">FOR ORGANISATIONS</div>
+              <h2 className="hero-card__green-title">
+                Your team. Our priority.
+              </h2>
+              <p className="hero-card__green-desc">
+                Thoughtful recruitment for the people your organisation depends on.
+              </p>
+              <div className="hero-card__btn-wrap">
+                <Link to="/employers" className="btn-pill-white">
+                  Find your next hire <span className="arrow-up-right">↗</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Col 3: Office photo + Your next chapter card */}
+            <div className="hero-card hero-card--split">
+              <div className="hero-card__split-photo">
+                <img 
+                  src="/assets/hero_office_work.jpg" 
+                  alt="Professional candidate in modern office" 
+                  className="hero-card__img"
+                />
+              </div>
+              <div className="hero-card__split-info">
+                <h3 className="hero-card__split-title">Your next chapter.</h3>
+                <p className="hero-card__split-desc">
+                  Find a role where you can make a difference.
+                </p>
+                <Link to="/opportunities" className="hero-card__link">
+                  Browse opportunities <span className="arrow-up-right">↗</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Sectors quick row */}
+          <div className="home-hero__sectors-row">
+            <Link to="/services" className="hero-sector-tag">Care homes</Link>
+            <span className="hero-sector-dot">·</span>
+            <Link to="/services" className="hero-sector-tag">Healthcare</Link>
+            <span className="hero-sector-dot">·</span>
+            <Link to="/services" className="hero-sector-tag">Supported living</Link>
+            <span className="hero-sector-dot">·</span>
+            <Link to="/services" className="hero-sector-tag">Corporate organisations</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. EDITORIAL ARCHITECTURAL BENTO SECTION (OURA & CO. VIBE) */}
+      <section className="editorial-bento-section">
+        <div className="container">
+          <div className="editorial-bento-grid">
+            {/* Left Column: Big Brand Heading, Manifesto & Photo */}
+            <div className="editorial-bento-left">
+              <h2 className="editorial-brand-title">LICHT &amp; CO.,</h2>
+              <p className="editorial-manifesto">
+                We believe recruitment is more than just filling rotas — it's about creating partnerships that inspire, support with dignity, and reflect the people who live, work, and thrive within them.
+              </p>
+
+              <div className="editorial-photo-box">
+                <img 
+                  src="/assets/approach_discussion.jpg" 
+                  alt="Thoughtful recruitment consultation at LICHT" 
+                  className="editorial-photo-img"
+                />
+                <div className="editorial-photo-caption">
+                  <span>Considered placement · Everyday dignity</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: 4-Grid Hairline Box */}
+            <div className="editorial-bento-right">
+              <div className="bento-matrix">
+                {/* Cell 1 */}
+                <div className="bento-cell">
+                  <p className="bento-cell-label">
+                    years into reimagining workforce reliability and specialist matching.
+                  </p>
+                  <span className="bento-cell-number">10+</span>
+                </div>
+
+                {/* Cell 2 */}
+                <div className="bento-cell">
+                  <p className="bento-cell-label">
+                    core specialist sectors across care, healthcare &amp; corporate.
+                  </p>
+                  <span className="bento-cell-number">4</span>
+                </div>
+
+                {/* Cell 3 */}
+                <div className="bento-cell">
+                  <p className="bento-cell-label">
+                    vetted candidates and dependable placements across the UK.
+                  </p>
+                  <span className="bento-cell-number">2.5k</span>
+                </div>
+
+                {/* Cell 4: High-Contrast Forest Green Cell */}
+                <div className="bento-cell bento-cell--dark">
+                  <p className="bento-cell-quote">
+                    Recruitment isn't just what you see — it's how the right person lives and works with you.
+                  </p>
+                  <Link to="/services" className="bento-cell-cta">
+                    <span>Learn more</span>
+                    <span className="arrow-up-right">↗</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. SPECIALIST UNDERSTANDING SECTION */}
+      <section className="home-specialist">
+        <div className="container">
+          <div className="home-specialist__header">
+            <div className="home-specialist__title-col">
+              <div className="figma-eyebrow">Where we make a difference</div>
+              <h2 className="home-section-title">
+                Specialist understanding.<br />
+                Human connections.
+              </h2>
+            </div>
+            <div className="home-specialist__desc-col">
+              <p className="home-specialist__lead">
+                Different settings. Different responsibilities. The same need for people you can rely on. We start by understanding yours.
+              </p>
+              <Link to="/services" className="home-inline-link">
+                Explore our services & sectors <span className="arrow-up-right">↗</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* 3 Sector Cards */}
+          <div className="home-sectors-grid">
+            {/* Card 1 */}
+            <div className="sector-feature-card">
+              <div className="sector-card-top-row">
+                <div className="sector-feature-card__icon">
+                  <HeartHandshake size={22} color="#204836" strokeWidth={1.8} />
+                </div>
+                <span className="sector-card-index">01</span>
+              </div>
+              <h3 className="sector-feature-card__title">Care & supported living</h3>
+              <p className="sector-feature-card__desc">
+                People who bring patience, compassion and consistency to everyday care.
+              </p>
+              <div className="sector-feature-card__tags">
+                Care assistants · Support workers
+              </div>
+            </div>
+
+            {/* Card 2 */}
+            <div className="sector-feature-card">
+              <div className="sector-card-top-row">
+                <div className="sector-feature-card__icon">
+                  <Stethoscope size={22} color="#204836" strokeWidth={1.8} />
+                </div>
+                <span className="sector-card-index">02</span>
+              </div>
+              <h3 className="sector-feature-card__title">Healthcare</h3>
+              <p className="sector-feature-card__desc">
+                Professional recruitment for patient-focused teams and clinical environments.
+              </p>
+              <div className="sector-feature-card__tags">
+                Healthcare assistants · Nursing roles
+              </div>
+            </div>
+
+            {/* Card 3 */}
+            <div className="sector-feature-card">
+              <div className="sector-card-top-row">
+                <div className="sector-feature-card__icon">
+                  <Building2 size={22} color="#204836" strokeWidth={1.8} />
+                </div>
+                <span className="sector-card-index">03</span>
+              </div>
+              <h3 className="sector-feature-card__title">Corporate & business</h3>
+              <p className="sector-feature-card__desc">
+                Dependable talent that helps your organisation move forward with confidence.
+              </p>
+              <div className="sector-feature-card__tags">
+                Administration · Operations · Business support
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. THE LICHT APPROACH SECTION */}
+      <section className="home-approach">
+        <div className="container">
+          <div className="home-approach__grid">
+            {/* Photo Left */}
+            <div className="home-approach__photo-wrap">
+              <img 
+                src="/assets/care_home_sector.jpg" 
+                alt="Compassionate health and care professional" 
+                className="home-approach__photo"
               />
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* 2. Our Approach Section (Figma Screenshot 2) */}
-      <section className="figma-approach-section">
-        <div className="container figma-approach-container">
-          <div className="figma-approach-left">
-            <div className="figma-teal-eyebrow">
-              <span className="figma-teal-dash" />
-              <span>OUR APPROACH</span>
-            </div>
-          </div>
+            {/* Content Right */}
+            <div className="home-approach__content">
+              <div className="figma-eyebrow">The LICHT approach</div>
+              <h2 className="home-section-title">
+                Recruitment with care.<br />
+                From the first conversation.
+              </h2>
+              <p className="home-approach__p">
+                Good recruitment is more than filling a vacancy. It is understanding the people, responsibilities and expectations behind it.
+              </p>
 
-          <div className="figma-approach-right">
-            <h2 className="figma-approach-title">
-              Recruitment built around<br />people and business needs.
-            </h2>
-            <p className="figma-approach-p">
-              Successful recruitment requires more than filling a vacancy. It involves understanding the role, the organisation and the qualities needed for a suitable match.
-            </p>
-            <p className="figma-approach-p">
-              We aim to support that process through clear communication, role-focused candidate identification and a professional approach to recruitment.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. Sector-Focused Recruitment (Figma Screenshot 3) */}
-      <section className="figma-sectors-section" id="sectors">
-        <div className="container">
-          <div className="figma-sectors-header">
-            <h2 className="figma-sectors-title">
-              Sector-focused recruitment for<br />the roles that matter.
-            </h2>
-            <p className="figma-sectors-subtitle">
-              Explore a service built around the needs of your sector.
-            </p>
-          </div>
-
-          <div className="figma-sectors-grid">
-            {/* Card 01 - Care Home */}
-            <div className="figma-sector-card">
-              <div className="figma-sector-card-top">
-                <div className="figma-sector-icon-box">
-                  <HeartHandshake size={22} />
+              <div className="home-approach__steps">
+                <div className="approach-step">
+                  <div className="approach-step__number">01</div>
+                  <div className="approach-step__body">
+                    <h4 className="approach-step__title">Listen first</h4>
+                    <p className="approach-step__desc">
+                      We take time to understand your needs, experience and priorities.
+                    </p>
+                  </div>
                 </div>
-                <span className="figma-sector-number">01</span>
-              </div>
-              <h3 className="figma-sector-name">Care Home Recruitment</h3>
-              <p className="figma-sector-desc">
-                Recruitment support for care providers seeking suitable candidates for care-related roles.
-              </p>
-              <Link to="/services/care-homes" className="figma-sector-link">
-                <span>Explore this service</span>
-                <ArrowUpRight size={17} />
-              </Link>
-            </div>
 
-            {/* Card 02 - Healthcare */}
-            <div className="figma-sector-card">
-              <div className="figma-sector-card-top">
-                <div className="figma-sector-icon-box">
-                  <Stethoscope size={22} />
+                <div className="approach-step">
+                  <div className="approach-step__number">02</div>
+                  <div className="approach-step__number--accent">02</div>
+                  <div className="approach-step__body">
+                    <h4 className="approach-step__title">Match thoughtfully</h4>
+                    <p className="approach-step__desc">
+                      We consider skills, suitability and the needs of the setting.
+                    </p>
+                  </div>
                 </div>
-                <span className="figma-sector-number">02</span>
-              </div>
-              <h3 className="figma-sector-name">Healthcare Recruitment</h3>
-              <p className="figma-sector-desc">
-                Support for healthcare organisations with appropriate clinical and non-clinical workforce requirements.
-              </p>
-              <Link to="/services/healthcare" className="figma-sector-link">
-                <span>Explore this service</span>
-                <ArrowUpRight size={17} />
-              </Link>
-            </div>
 
-            {/* Card 03 - Corporate */}
-            <div className="figma-sector-card">
-              <div className="figma-sector-card-top">
-                <div className="figma-sector-icon-box">
-                  <Building2 size={22} />
+                <div className="approach-step">
+                  <div className="approach-step__number">03</div>
+                  <div className="approach-step__body">
+                    <h4 className="approach-step__title">Support the next step</h4>
+                    <p className="approach-step__desc">
+                      Clear communication, considered checks and practical guidance.
+                    </p>
+                  </div>
                 </div>
-                <span className="figma-sector-number">03</span>
               </div>
-              <h3 className="figma-sector-name">Corporate Recruitment</h3>
-              <p className="figma-sector-desc">
-                Support across administration, business support, customer service, operations and agreed functions.
-              </p>
-              <Link to="/services/corporate" className="figma-sector-link">
-                <span>Explore this service</span>
-                <ArrowUpRight size={17} />
-              </Link>
+
+              <div className="home-approach__cta">
+                <Link to="/about" className="home-inline-link">
+                  Get to know LICHT <span className="arrow-up-right">↗</span>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 4. Why LICHT Section (Figma Screenshot 4) */}
-      <section className="figma-why-section">
-        <div className="container">
-          <div className="figma-why-header">
-            <div className="figma-teal-eyebrow text-center">
-              <span className="figma-teal-dash" />
-              <span>WHY LICHT</span>
+      {/* 5. DARK NAVY CANDIDATE BANNER */}
+      <section className="home-navy-banner">
+        <div className="container home-navy-banner__container">
+          <div className="home-navy-banner__left">
+            <div className="figma-eyebrow figma-eyebrow--white">
+              For people ready for what's next
             </div>
-            <h2 className="figma-why-title">
-              A professional approach to<br />recruitment.
+            <h2 className="home-navy-banner__title">
+              Your skills deserve<br />
+              a place to shine.
             </h2>
-            <p className="figma-why-subtitle">
-              These principles guide the service we aim to provide to every employer and candidate.
+            <p className="home-navy-banner__subtitle">
+              Whether you are exploring your first role or taking your next step, start a conversation with us.
             </p>
           </div>
 
-          <div className="figma-why-grid">
-            <div className="figma-why-item">
-              <div className="figma-why-icon-wrap">
-                <ClipboardCheck size={28} />
-              </div>
-              <h4>Understanding Your Requirements</h4>
-              <p>
-                We begin by clarifying the vacancy, essential criteria, and preferred candidate qualities.
-              </p>
-            </div>
-
-            <div className="figma-why-item">
-              <div className="figma-why-icon-wrap">
-                <Search size={28} />
-              </div>
-              <h4>Role-Focused Candidate Search</h4>
-              <p>
-                We identify candidates whose experience and stated suitability align with the specific role.
-              </p>
-            </div>
-
-            <div className="figma-why-item">
-              <div className="figma-why-icon-wrap">
-                <MessageSquare size={28} />
-              </div>
-              <h4>Clear Communication</h4>
-              <p>
-                We aim to maintain professional communication throughout the agreed recruitment process.
-              </p>
-            </div>
-
-            <div className="figma-why-item">
-              <div className="figma-why-icon-wrap">
-                <Users size={28} />
-              </div>
-              <h4>A People-Centred Approach</h4>
-              <p>
-                We treat candidates and employers respectfully while keeping the requirements of the role central.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. How It Works Section (Figma Screenshot 5) */}
-      <section className="figma-process-section">
-        <div className="container">
-          <div className="figma-process-header">
-            <div className="figma-hero-eyebrow">
-              <span className="figma-gold-dash" />
-              <span>HOW IT WORKS</span>
-            </div>
-            <h2 className="figma-process-title">
-              A clear path from requirement to<br />next steps.
-            </h2>
-            <p className="figma-process-subtitle">
-              A considered four-stage approach, adapted to the role and organisation.
-            </p>
-          </div>
-
-          <div className="figma-process-grid">
-            <div className="figma-process-col">
-              <span className="figma-process-num">01</span>
-              <h4>Discuss Your Requirements</h4>
-              <p>
-                Share the role, recruitment objectives, location, timeline and candidate profile required.
-              </p>
-            </div>
-
-            <div className="figma-process-col">
-              <span className="figma-process-num">02</span>
-              <h4>Agree the Approach</h4>
-              <p>
-                Confirm service scope, responsibilities, terms and the search timeline.
-              </p>
-            </div>
-
-            <div className="figma-process-col">
-              <span className="figma-process-num">03</span>
-              <h4>Identify Candidates</h4>
-              <p>
-                Search for relevant candidates and assess suitability against agreed criteria.
-              </p>
-            </div>
-
-            <div className="figma-process-col">
-              <span className="figma-process-num">04</span>
-              <h4>Coordinate Next Steps</h4>
-              <p>
-                Support communication, interviews and other agreed recruitment activities.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. For Candidates Section (Figma Screenshot) */}
-      <section className="figma-candidates-section">
-        <div className="container figma-candidates-grid">
-          <div className="figma-candidates-image-col">
-            <img 
-              src="/assets/healthcare_sector.jpg" 
-              alt="Healthcare professionals supported by LICHT Recruitment" 
-              className="figma-candidates-image"
-            />
-          </div>
-
-          <div className="figma-candidates-text-col">
-            <div className="figma-teal-eyebrow">
-              <span className="figma-teal-dash" />
-              <span>FOR CANDIDATES</span>
-            </div>
-
-            <h2 className="figma-candidates-title">
-              Your next opportunity<br />starts here.
-            </h2>
-
-            <p className="figma-candidates-desc">
-              Explore available opportunities or share your CV so our team can consider your information for relevant roles, subject to suitable vacancies and applicable requirements.
-            </p>
-
-            <div className="figma-candidates-actions">
-              <Link to="/opportunities" className="btn-figma-primary">
-                <span>View Opportunities</span>
-                <ArrowRight size={17} />
-              </Link>
-
-              <Link to="/submit-cv" className="btn-figma-white">
-                <span>Submit Your CV</span>
-                <ArrowRight size={17} />
-              </Link>
-            </div>
-
-            <p className="figma-candidates-footnote">
-              Submitting your CV does not guarantee an interview or placement. See our{' '}
-              <Link to="/privacy-policy" className="figma-text-link">privacy policy</Link>.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 7. Looking for the Right People Banner (Figma Screenshot) */}
-      <section className="figma-callout-banner">
-        <div className="container figma-callout-container">
-          <div className="figma-callout-left">
-            <h2 className="figma-callout-title">Looking for the right people?</h2>
-            <p className="figma-callout-desc">
-              Tell us about your recruitment needs and discuss how LICHT may be able to support your organisation.
-            </p>
-          </div>
-          <div className="figma-callout-right">
-            <Link to="/employers" className="btn-figma-primary figma-callout-btn">
-              <span>Discuss Your Recruitment Needs</span>
-              <ArrowRight size={17} />
+          <div className="home-navy-banner__right">
+            <Link to="/opportunities" className="btn-pill-white">
+              Find your next role <span className="arrow-up-right">↗</span>
             </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* 8. FAQs Section (Figma Screenshot) */}
-      <section className="figma-faq-section">
-        <div className="container figma-faq-grid">
-          <div className="figma-faq-left">
-            <div className="figma-teal-eyebrow">
-              <span className="figma-teal-dash" />
-              <span>FAQS</span>
-            </div>
-            <h2 className="figma-faq-title">
-              Questions,<br />answered clearly.
-            </h2>
-            <p className="figma-faq-subtitle">
-              Straightforward information for employers and candidates.
+            <p className="home-navy-banner__note">
+              Care, healthcare and corporate opportunities
             </p>
           </div>
-
-          <div className="figma-faq-right">
-            <Accordion items={FREQUENTLY_ASKED_QUESTIONS} />
-          </div>
         </div>
       </section>
 
-      {/* 9. Let's Start a Conversation Section (Figma Screenshot) */}
-      <section className="figma-get-started-section">
-        <div className="container text-center max-w-800">
-          <div className="figma-teal-eyebrow center-eyebrow">
-            <span className="figma-teal-dash" />
-            <span>GET STARTED</span>
-          </div>
-
-          <h2 className="figma-get-started-title">
-            Let's start a conversation.
-          </h2>
-
-          <p className="figma-get-started-desc">
-            Whether you are planning your next hire or exploring opportunities, take the next step with LICHT.
+      {/* 6. CALL TO ACTION SECTION */}
+      <section className="figma-cta-section">
+        <div className="container">
+          <h2 className="figma-cta-headline">Let's find your way forward.</h2>
+          <p className="figma-cta-subhead">
+            A staffing requirement. A career move. It starts with a conversation.
           </p>
-
-          <div className="figma-get-started-actions">
-            <Link to="/contact" className="btn-figma-primary">
-              <span>Contact Our Team</span>
-              <ArrowRight size={17} />
+          <div className="figma-cta-btn-row">
+            <Link to="/employers" className="btn-pill-green">
+              Request staff <span className="arrow-up-right">↗</span>
             </Link>
-
-            <Link to="/opportunities" className="btn-figma-white">
-              <span>Explore Opportunities</span>
-              <ArrowRight size={17} />
+            <Link to="/opportunities" className="btn-pill-outline">
+              Explore opportunities <span className="arrow-up-right">↗</span>
             </Link>
           </div>
         </div>
@@ -385,5 +361,3 @@ export const Home: React.FC = () => {
     </div>
   );
 };
-
-export default Home;

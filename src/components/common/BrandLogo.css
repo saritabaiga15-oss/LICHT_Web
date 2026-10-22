@@ -1,0 +1,22 @@
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  user-select: none;
+}
+
+.brand-logo__img {
+  height: 44px;
+  width: auto;
+  max-width: 220px;
+  object-fit: contain;
+  display: block;
+}
+
+@media (max-width: 600px) {
+  .brand-logo__img {
+    height: 38px;
+    max-width: 180px;
+  }
+}
+
