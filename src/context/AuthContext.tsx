@@ -1,6 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, AuthContextType, SavedCV, ExperienceItem, JobApplication, EducationItem } from '../types/auth';
 import { DEMO_USER_PROFILE } from '../data/demoUser';
+import { 
+  candidateRegister, 
+  candidateLogin, 
+  applyToJob as apiApplyToJob, 
+  withdrawCandidateApplication as apiWithdrawApplication, 
+  saveJob as apiSaveJob, 
+  unsaveJob as apiUnsaveJob, 
+  updateCandidateProfile as apiUpdateCandidateProfile 
+} from '../services/api';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -33,22 +42,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user]);
 
-  const login = (email: string, _password?: string): boolean => {
-    // Check if email matches demo or log in with demo data
-    if (email.toLowerCase().includes('eleanor') || email.toLowerCase().includes('demo') || !user) {
-      setUser(DEMO_USER_PROFILE);
-    } else {
-      // If logging in with previously stored or new email
-      setUser(prev => prev ? { ...prev, email } : {
-        ...DEMO_USER_PROFILE,
-        email,
-        fullName: email.split('@')[0].replace(/[._]/g, ' ')
-      });
+  const login = async (email: string, password?: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const res = await candidateLogin({ email, password: password || 'Candidate2026!' });
+      if (res && res.success && res.data) {
+        if (res.data.token) {
+          localStorage.setItem('licht_token', res.data.token);
+        }
+        if (res.data.user) {
+          setUser({
+            ...DEMO_USER_PROFILE,
+            ...res.data.user,
+            id: String(res.data.user.id)
+          });
+        }
+        return { success: true };
+      }
+      return { success: false, message: res?.message || 'Login failed.' };
+    } catch (err: any) {
+      // Demo fallback if demo user
+      if (email.toLowerCase().includes('eleanor') || email.toLowerCase().includes('demo')) {
+        setUser(DEMO_USER_PROFILE);
+        return { success: true };
+      }
+      return { success: false, message: err?.message || 'Invalid email or password.' };
     }
-    return true;
   };
 
-  const signup = (profileData: Partial<UserProfile>) => {
+  const signup = async (profileData: Partial<UserProfile> & { password?: string }): Promise<{ success: boolean; message?: string }> => {
+    const candidatePassword = profileData.password || 'Candidate2026!';
     const newUser: UserProfile = {
       id: `cand-${Date.now().toString().slice(-4)}`,
       fullName: profileData.fullName || 'New Candidate',
@@ -81,10 +103,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       savedJobs: []
     };
 
-    setUser(newUser);
+    try {
+      const res = await candidateRegister({
+        fullName: newUser.fullName,
+        email: newUser.email,
+        password: candidatePassword,
+        phone: newUser.phone,
+        location: newUser.location,
+        postcode: newUser.postcode,
+        headline: newUser.headline,
+        experienceLevel: newUser.experienceLevel,
+        targetSector: newUser.targetSector,
+        availability: newUser.availability,
+        dbsStatus: newUser.dbsStatus,
+        bio: newUser.bio,
+        skills: newUser.skills,
+        certifications: newUser.certifications
+      });
+
+      if (res && res.data?.token) {
+        localStorage.setItem('licht_token', res.data.token);
+      }
+      if (res && res.data?.user) {
+        newUser.id = String(res.data.user.id);
+      }
+      setUser(newUser);
+      return { success: true };
+    } catch (err: any) {
+      return { 
+        success: false, 
+        message: err?.message || 'Could not complete registration. An account with this email may already exist.' 
+      };
+    }
   };
 
   const logout = () => {
+    localStorage.removeItem('licht_token');
     setUser(null);
   };
 
@@ -93,6 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!prev) return null;
       return { ...prev, ...updates };
     });
+    apiUpdateCandidateProfile(updates).catch(() => {});
   };
 
   const applyToJob = (job: {
@@ -133,6 +188,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     });
 
+    // Synchronize to Spring Boot backend & Neon PostgreSQL database
+    apiApplyToJob(job.id, notes).catch(() => {});
+
     return true;
   };
 
@@ -149,6 +207,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         appliedJobs: prev.appliedJobs.filter(app => app.id !== applicationId)
       };
     });
+    apiWithdrawApplication(applicationId).catch(() => {});
   };
 
   const updateCV = (cv: SavedCV) => {
@@ -212,6 +271,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (prev.savedJobs.includes(jobId)) return prev;
       return { ...prev, savedJobs: [...prev.savedJobs, jobId] };
     });
+    apiSaveJob(jobId).catch(() => {});
   };
 
   const unsaveJob = (jobId: string) => {
@@ -219,12 +279,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!prev) return null;
       return { ...prev, savedJobs: prev.savedJobs.filter(id => id !== jobId) };
     });
+    apiUnsaveJob(jobId).catch(() => {});
   };
 
   const isJobSaved = (jobId: string): boolean => {
     if (!user) return false;
     return user.savedJobs.includes(jobId);
   };
+
 
   return (
     <AuthContext.Provider

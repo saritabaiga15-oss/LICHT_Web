@@ -29,7 +29,7 @@ export const Login: React.FC = () => {
 
   const from = (location.state as any)?.from?.pathname || '/profile';
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -43,20 +43,25 @@ export const Login: React.FC = () => {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      login(email, password);
+    try {
+      const res = await login(email, password);
+      if (res.success) {
+        navigate(from, { replace: true });
+      } else {
+        setError(res.message || 'Invalid email or password.');
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Login failed. Please verify your credentials.');
+    } finally {
       setIsLoading(false);
-      navigate(from, { replace: true });
-    }, 450);
+    }
   };
 
-  const handleDemoLogin = () => {
+  const handleDemoLogin = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      login('eleanor.vance@licht-talent.co.uk', 'password123');
-      setIsLoading(false);
-      navigate('/profile', { replace: true });
-    }, 300);
+    await login('eleanor.vance@licht-talent.co.uk', 'password123');
+    setIsLoading(false);
+    navigate('/profile', { replace: true });
   };
 
   return (

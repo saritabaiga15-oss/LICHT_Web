@@ -79,7 +79,7 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
   }, [isEmployerAuthenticated, navigate]);
 
   // Handle Sign In submission
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
     setLoginPending('');
@@ -90,8 +90,8 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
     }
 
     setIsLoggingIn(true);
-    setTimeout(() => {
-      const result = employerLogin(email, password);
+    try {
+      const result = await employerLogin(email, password);
       setIsLoggingIn(false);
       if (result.success) {
         navigate('/employer');
@@ -100,20 +100,22 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
       } else {
         setLoginError(result.message || 'Invalid employer credentials.');
       }
-    }, 400);
+    } catch (err: any) {
+      setIsLoggingIn(false);
+      setLoginError(err?.message || 'Login failed.');
+    }
   };
 
   // 1-Click Demo Login
-  const handleDemoSignIn = () => {
+  const handleDemoSignIn = async () => {
     setEmail('j.thorne@stjudecare.co.uk');
     setPassword('••••••••••••');
     setIsLoggingIn(true);
-    setTimeout(() => {
-      employerLogin('j.thorne@stjudecare.co.uk');
-      setIsLoggingIn(false);
-      navigate('/employer');
-    }, 350);
+    await employerLogin('j.thorne@stjudecare.co.uk');
+    setIsLoggingIn(false);
+    navigate('/employer');
   };
+
 
   // Step 1 Validation
   const handleNextToStep2 = (e: React.FormEvent) => {
@@ -190,8 +192,8 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
     }
 
     setIsRegistering(true);
-    setTimeout(() => {
-      registerEmployer({
+    try {
+      await registerEmployer({
         organisationName: regOrgName.trim(),
         companyNumber: regCompanyNumber.trim() || `12${Math.floor(100000 + Math.random() * 900000)}`,
         facilityType: regFacilityType,
@@ -213,8 +215,12 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
 
       setIsRegistering(false);
       setRegSubmitted(true);
-    }, 600);
+    } catch (err: any) {
+      setIsRegistering(false);
+      setRegError(err?.message || 'Registration failed. An account with this email may already exist.');
+    }
   };
+
 
   return (
     <div className="emp-login-page">

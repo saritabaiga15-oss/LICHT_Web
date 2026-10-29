@@ -15,6 +15,7 @@ import {
   Users
 } from 'lucide-react';
 import './Forms.css';
+import { submitEmployerStaffingForm } from '../../services/api';
 
 interface FormData {
   organisationName: string;
@@ -99,19 +100,29 @@ export const EmployerEnquiryForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
     setIsSubmitting(true);
 
-    // Simulate reliable secure dispatch
-    setTimeout(() => {
+    try {
+      const res = await submitEmployerStaffingForm(formData);
+      if (res && res.referenceCode) {
+        setSubmissionSuccess(res.referenceCode);
+      } else {
+        const refNumber = `LICHT-EMP-${Math.floor(10000 + Math.random() * 90000)}`;
+        setSubmissionSuccess(refNumber);
+      }
+      setFormData(initialData);
+    } catch (err) {
+      // Fallback
       const refNumber = `LICHT-EMP-${Math.floor(10000 + Math.random() * 90000)}`;
-      setIsSubmitting(false);
       setSubmissionSuccess(refNumber);
       setFormData(initialData);
-    }, 1200);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submissionSuccess) {

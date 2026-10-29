@@ -8,6 +8,7 @@ import {
   EmployerLoginResult 
 } from '../types/employer';
 import { DEMO_EMPLOYER, INITIAL_EMPLOYER_JOBS, TALENT_POOL, INITIAL_ALL_EMPLOYERS } from '../data/employerData';
+import { employerLogin as apiEmployerLogin, employerRegister as apiEmployerRegister, postNewJob as apiPostNewJob } from '../services/api';
 
 const EMPLOYER_STORAGE_KEY = 'licht_employer_profile';
 const ALL_EMPLOYERS_STORAGE_KEY = 'licht_all_employers';
@@ -75,10 +76,66 @@ export const EmployerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.setItem(SAVED_CANDIDATES_KEY, JSON.stringify(savedCandidates));
   }, [savedCandidates]);
 
-  const employerLogin = (email: string, _password?: string): EmployerLoginResult => {
+  const employerLogin = async (email: string, password?: string): Promise<EmployerLoginResult> => {
     const cleanEmail = email.trim().toLowerCase();
-    
-    // Check in registered allEmployers
+
+    // 1. Try Live Spring Boot backend & PostgreSQL Neon DB
+    try {
+      const res = await apiEmployerLogin({ email: cleanEmail, password: password || 'Secure2026!' });
+      if (res && res.success && res.data) {
+        if (res.data.token) {
+          localStorage.setItem('licht_token', res.data.token);
+        }
+        if (res.data.employer) {
+          const emp = res.data.employer;
+          const mappedEmp: EmployerAccount = {
+            ...DEMO_EMPLOYER,
+            id: String(emp.id),
+            contactName: emp.contactName,
+            roleTitle: emp.roleTitle || 'Registered Manager',
+            organisationName: emp.organisationName,
+            facilityType: emp.facilityType || 'Care Home & Residential Facility',
+            email: emp.email,
+            phone: emp.phone || '+44 20 7946 0812',
+            location: emp.location || 'London, United Kingdom',
+            cqcRating: emp.cqcRating || 'Good',
+            registeredAddress: emp.registeredAddress || '72 High Street, London',
+            postcode: emp.postcode || 'W8 4QP',
+            website: emp.website || 'https://www.carefacility.co.uk',
+            primarySector: emp.primarySector || 'Care homes',
+            verificationStatus: (emp.verificationStatus as any) || 'Verified',
+            documentsVerified: Boolean(emp.documentsVerified)
+          };
+          setEmployer(mappedEmp);
+          return { success: true, status: 'OK' };
+        }
+      }
+    } catch (err: any) {
+      const msg = err?.message || '';
+      if (msg.toLowerCase().includes('pending') || msg.toLowerCase().includes('verification')) {
+        return {
+          success: false,
+          status: 'PENDING',
+          message: msg
+        };
+      }
+      if (msg.toLowerCase().includes('rejected') || msg.toLowerCase().includes('declined')) {
+        return {
+          success: false,
+          status: 'REJECTED',
+          message: msg
+        };
+      }
+      if (msg.toLowerCase().includes('incorrect') || msg.toLowerCase().includes('no organisation')) {
+        return {
+          success: false,
+          status: 'INVALID',
+          message: msg
+        };
+      }
+    }
+
+    // 2. Check in registered allEmployers
     const match = allEmployers.find(e => e.email.toLowerCase() === cleanEmail);
 
     if (match) {
@@ -116,7 +173,7 @@ export const EmployerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   };
 
-  const registerEmployer = (data: Partial<EmployerAccount>, password?: string): EmployerAccount => {
+  const registerEmployer = async (data: Partial<EmployerAccount>, password?: string): Promise<EmployerAccount> => {
     const newAccount: EmployerAccount = {
       id: `emp-${Date.now()}`,
       contactName: data.contactName || 'Healthcare Director',
@@ -145,12 +202,39 @@ export const EmployerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       registrationDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     };
 
+    // Sync to live Spring Boot backend (Neon DB)
+    try {
+      const res = await apiEmployerRegister({
+        contactName: newAccount.contactName,
+        roleTitle: newAccount.roleTitle,
+        organisationName: newAccount.organisationName,
+        facilityType: newAccount.facilityType,
+        email: newAccount.email,
+        password: newAccount.password,
+        phone: newAccount.phone,
+        location: newAccount.location,
+        postcode: newAccount.postcode,
+        cqcRating: newAccount.cqcRating,
+        companyNumber: newAccount.companyNumber,
+        cqcProviderId: newAccount.cqcProviderId,
+        insurancePolicy: newAccount.insurancePolicy,
+        registeredAddress: newAccount.registeredAddress,
+        website: newAccount.website,
+        primarySector: newAccount.primarySector
+      });
+      if (res && res.data?.employer) {
+        newAccount.id = String(res.data.employer.id);
+      }
+    } catch (err: any) {
+      console.warn('Backend employer register note:', err?.message);
+    }
+
     // Add to allEmployers list
     setAllEmployers(prev => [newAccount, ...prev]);
 
-    // Do NOT set active employer - they must be verified first!
     return newAccount;
   };
+
 
   const approveEmployer = (employerId: string) => {
     setAllEmployers(prev => prev.map(e => {
@@ -212,6 +296,19 @@ export const EmployerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       postedDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
       applicants: []
     };
+    // Sync posted job to backend
+    apiPostNewJob({
+      title: job.title,
+      sector: job.sector,
+      location: job.location,
+      contract: job.contractType,
+      type: job.contractType,
+      pay: job.payRate,
+      urgentCover: job.urgentCover || false,
+      summary: `Urgent staffing requirement for ${job.title} in ${job.location}`,
+      companyName: employer ? employer.organisationName : 'LICHT Healthcare Partner'
+    }).catch(() => {});
+
     setJobListings(prev => [newEntry, ...prev]);
   };
 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Search, 
@@ -12,9 +12,11 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { SAMPLE_VACANCIES, Vacancy } from '../data/mockData';
+import { fetchJobs } from '../services/api';
 import './Opportunities.css';
 
 export const Opportunities: React.FC = () => {
+  const [vacancies, setVacancies] = useState<Vacancy[]>(SAMPLE_VACANCIES);
   const [keyword, setKeyword] = useState('');
   const [locationSearch, setLocationSearch] = useState('');
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
@@ -40,8 +42,18 @@ export const Opportunities: React.FC = () => {
     setLocationSearch('');
   };
 
+  useEffect(() => {
+    fetchJobs()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setVacancies(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const filteredVacancies = useMemo(() => {
-    return SAMPLE_VACANCIES.filter((v: Vacancy) => {
+    return vacancies.filter((v: Vacancy) => {
       // Keyword filter
       if (keyword.trim()) {
         const query = keyword.toLowerCase();

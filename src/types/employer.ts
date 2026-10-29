@@ -103,8 +103,8 @@ export interface EmployerLoginResult {
 export interface EmployerContextType {
   employer: EmployerAccount | null;
   isEmployerAuthenticated: boolean;
-  employerLogin: (email: string, password?: string) => EmployerLoginResult;
-  registerEmployer: (data: Partial<EmployerAccount>, password?: string) => EmployerAccount;
+  employerLogin: (email: string, password?: string) => Promise<EmployerLoginResult> | EmployerLoginResult;
+  registerEmployer: (data: Partial<EmployerAccount>, password?: string) => Promise<EmployerAccount> | EmployerAccount;
   updateEmployerProfile: (data: Partial<EmployerAccount>) => void;
   employerLogout: () => void;
   jobListings: EmployerJobListing[];

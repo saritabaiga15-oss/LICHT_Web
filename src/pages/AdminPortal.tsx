@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { useEmployer } from '../context/EmployerContext';
 import { EmployerAccount } from '../types/employer';
+import { adminLogin, fetchAdminCandidates, updateCandidateCompliance, approveAdminEmployer, rejectAdminEmployer } from '../services/api';
 import './AdminPortal.css';
 
 // Admin credentials
@@ -513,6 +514,51 @@ export const AdminPortal: React.FC = () => {
     localStorage.setItem('licht_admin_applications', JSON.stringify(applications));
   }, [applications]);
 
+  // Fetch live candidates from Neon database when admin portal is opened
+  useEffect(() => {
+    fetchAdminCandidates()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const liveMapped: AdminCandidate[] = data.map((c: any) => ({
+            id: String(c.id),
+            name: c.fullName || 'Candidate',
+            avatarInitials: (c.fullName || 'C')
+              .split(' ')
+              .map((n: string) => n[0])
+              .join('')
+              .substring(0, 2)
+              .toUpperCase(),
+            headline: c.headline || 'Healthcare Professional',
+            email: c.email,
+            phone: c.phone || 'N/A',
+            location: c.location || 'London, UK',
+            postcode: c.postcode || '',
+            sector: c.targetSector || 'Care homes',
+            experienceLevel: c.experienceLevel || '1+ years of experience',
+            experienceYears: 3,
+            education: (c.education || []).map((e: any) => ({
+              qualification: e.qualification || '',
+              fieldOfStudy: e.fieldOfStudy || '',
+              institution: e.institution || '',
+              graduationYear: e.graduationYear || ''
+            })),
+            skills: c.skills || [],
+            certifications: c.certifications || [],
+            dbsStatus: c.dbsStatus || 'Enhanced DBS on Update Service',
+            dbsVerified: Boolean(c.dbsVerified),
+            rightToWorkVerified: Boolean(c.rightToWorkVerified),
+            nmcPinVerified: Boolean(c.nmcPinVerified),
+            availability: c.availability || 'Immediately available',
+            cvFileName: c.savedCvFileName || 'Candidate_Profile_CV.pdf',
+            cvFileSize: c.savedCvFileSize || '380 KB',
+            registrationDate: c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Today'
+          }));
+          setCandidates(liveMapped);
+        }
+      })
+      .catch(() => {});
+  }, [isAdminLoggedIn]);
+
   // Employer state
   const [expandedEmployerId, setExpandedEmployerId] = useState<string | null>(null);
   const [employerSearch, setEmployerSearch] = useState('');
@@ -533,11 +579,20 @@ export const AdminPortal: React.FC = () => {
   const [appStatusFilter, setAppStatusFilter] = useState<string>('All');
 
   // Login handler
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
     setIsLoggingIn(true);
-    setTimeout(() => {
+
+    try {
+      const res = await adminLogin({ email: adminEmail, password: adminPassword });
+      if (res && res.success) {
+        setIsAdminLoggedIn(true);
+      } else {
+        setLoginError(res?.message || 'Invalid admin credentials.');
+      }
+    } catch (err: any) {
+      // Fallback
       const cleanEmail = adminEmail.trim().toLowerCase();
       if (
         (cleanEmail === ADMIN_EMAIL.toLowerCase() || cleanEmail === 'admin@lichtrecruitment.co.uk') &&
@@ -545,15 +600,17 @@ export const AdminPortal: React.FC = () => {
       ) {
         setIsAdminLoggedIn(true);
       } else {
-        setLoginError('Invalid admin credentials. Please enter authorized admin email and password.');
+        setLoginError(err?.message || 'Invalid admin credentials. Please enter authorized credentials.');
       }
+    } finally {
       setIsLoggingIn(false);
-    }, 350);
+    }
   };
 
   // Employer actions
   const handleApprove = (emp: EmployerAccount) => {
     approveEmployer(emp.id);
+    approveAdminEmployer(emp.id).catch(() => {});
     setActionFeedback({ id: emp.id, type: 'approved' });
     setExpandedEmployerId(null);
     setTimeout(() => setActionFeedback(null), 3500);
@@ -561,6 +618,7 @@ export const AdminPortal: React.FC = () => {
 
   const handleReject = (emp: EmployerAccount) => {
     rejectEmployer(emp.id, rejectReason || undefined);
+    rejectAdminEmployer(emp.id, rejectReason || undefined).catch(() => {});
     setActionFeedback({ id: emp.id, type: 'rejected' });
     setRejectingId(null);
     setRejectReason('');
@@ -570,18 +628,25 @@ export const AdminPortal: React.FC = () => {
 
   // Candidate verification actions
   const toggleDBSVerify = (candId: string) => {
+    let newStatus = false;
     setCandidates(prev => prev.map(c => {
       if (c.id !== candId) return c;
-      return { ...c, dbsVerified: !c.dbsVerified };
+      newStatus = !c.dbsVerified;
+      return { ...c, dbsVerified: newStatus };
     }));
+    updateCandidateCompliance(candId, { dbsVerified: newStatus }).catch(() => {});
   };
 
   const toggleRightToWorkVerify = (candId: string) => {
+    let newStatus = false;
     setCandidates(prev => prev.map(c => {
       if (c.id !== candId) return c;
-      return { ...c, rightToWorkVerified: !c.rightToWorkVerified };
+      newStatus = !c.rightToWorkVerified;
+      return { ...c, rightToWorkVerified: newStatus };
     }));
+    updateCandidateCompliance(candId, { rightToWorkVerified: newStatus }).catch(() => {});
   };
+
 
   // Application status update
   const handleApplicationStatusChange = (appId: string, newStatus: AdminApplication['status']) => {

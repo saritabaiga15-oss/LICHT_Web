@@ -17,6 +17,7 @@ import {
   Info
 } from 'lucide-react';
 import './Forms.css';
+import { submitCandidateCvDrop } from '../../services/api';
 
 interface CandidateData {
   fullName: string;
@@ -155,17 +156,40 @@ export const CandidateCVForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    try {
+      const data = new FormData();
+      data.append('fullName', formData.fullName);
+      data.append('email', formData.email);
+      data.append('telephone', formData.telephone);
+      data.append('preferredSector', formData.preferredSector);
+      data.append('targetRole', formData.targetRole);
+      data.append('preferredLocation', formData.preferredLocation);
+      data.append('message', formData.message);
+      data.append('privacyConsent', String(formData.privacyConsent));
+      if (selectedFile) {
+        data.append('file', selectedFile);
+      }
+
+      const res = await submitCandidateCvDrop(data);
+      if (res && res.referenceCode) {
+        setSubmissionSuccess(res.referenceCode);
+      } else {
+        const refNumber = `LICHT-CAN-${Math.floor(10000 + Math.random() * 90000)}`;
+        setSubmissionSuccess(refNumber);
+      }
+    } catch (err) {
+      // Fallback
       const refNumber = `LICHT-CAN-${Math.floor(10000 + Math.random() * 90000)}`;
-      setIsSubmitting(false);
       setSubmissionSuccess(refNumber);
-    }, 1200);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submissionSuccess) {

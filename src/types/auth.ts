@@ -79,8 +79,8 @@ export interface UserProfile {
 export interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
-  login: (email: string, password?: string) => boolean;
-  signup: (profileData: Partial<UserProfile>) => void;
+  login: (email: string, password?: string) => Promise<{ success: boolean; message?: string }>;
+  signup: (profileData: Partial<UserProfile>) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   updateProfile: (updates: Partial<UserProfile>) => void;
   applyToJob: (job: {

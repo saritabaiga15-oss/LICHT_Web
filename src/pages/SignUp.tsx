@@ -198,7 +198,7 @@ export const SignUp: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleFinalSubmit = (e: React.FormEvent) => {
+  const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -222,9 +222,10 @@ export const SignUp: React.FC = () => {
     }));
 
     // Register user profile
-    signup({
+    const res = await signup({
       fullName,
       email,
+      password,
       phone,
       location,
       postcode: postcode || 'London, UK',
@@ -249,9 +250,16 @@ export const SignUp: React.FC = () => {
       } : null
     });
 
+    if (res && !res.success) {
+      setError(res.message || 'Registration failed. Please check your information and try again.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     // Navigate to candidate profile
     navigate('/profile', { replace: true });
   };
+
 
   return (
     <div className="signup-page">

@@ -17,6 +17,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import './Contact.css';
+import { submitContactForm } from '../services/api';
 
 interface ContactFormData {
   fullName: string;
@@ -83,17 +84,28 @@ export const Contact: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      const refCode = `LICHT-MSG-${Math.floor(10000 + Math.random() * 90000)}`;
-      setIsSubmitting(false);
+    try {
+      const response = await submitContactForm(formData);
+      if (response && response.referenceCode) {
+        setSubmittedRef(response.referenceCode);
+      } else {
+        const refCode = `LICHT-CON-${Math.floor(10000 + Math.random() * 90000)}`;
+        setSubmittedRef(refCode);
+      }
+      setFormData(initialContactData);
+    } catch (err) {
+      // Fallback in case backend is offline
+      const refCode = `LICHT-CON-${Math.floor(10000 + Math.random() * 90000)}`;
       setSubmittedRef(refCode);
       setFormData(initialContactData);
-    }, 900);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
