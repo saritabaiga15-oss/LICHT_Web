@@ -50,6 +50,7 @@ export const CandidateCVForm: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof CandidateData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState<string | null>(null);
 
   useEffect(() => {
@@ -132,7 +133,7 @@ export const CandidateCVForm: React.FC = () => {
       newErrors.targetRole = 'Please indicate your target role or area of interest';
     }
     if (!selectedFile) {
-      setFileError('Please attach your CV document (PDF, DOC, or DOCX up to 5MB)');
+      setFileError('Please attach your CV document (PDF, DOC, or DOCX up to 10MB)');
     }
     if (!formData.privacyConsent) {
       newErrors.privacyConsent = 'You must acknowledge the candidate privacy policy to submit';
@@ -176,17 +177,12 @@ export const CandidateCVForm: React.FC = () => {
         data.append('file', selectedFile);
       }
 
+      setSubmitError(null);
       const res = await submitCandidateCvDrop(data);
-      if (res && res.referenceCode) {
-        setSubmissionSuccess(res.referenceCode);
-      } else {
-        const refNumber = `LICHT-CAN-${Math.floor(10000 + Math.random() * 90000)}`;
-        setSubmissionSuccess(refNumber);
-      }
-    } catch (err) {
-      // Fallback
-      const refNumber = `LICHT-CAN-${Math.floor(10000 + Math.random() * 90000)}`;
-      setSubmissionSuccess(refNumber);
+      // Only the server-issued reference proves the CV was stored
+      setSubmissionSuccess(res?.referenceCode || 'Submitted');
+    } catch (err: any) {
+      setSubmitError(err?.message || 'We could not upload your CV. Please try again, or email it to our team.');
     } finally {
       setIsSubmitting(false);
     }
@@ -271,6 +267,7 @@ export const CandidateCVForm: React.FC = () => {
             <Mail size={16} className="input-icon" />
             <input
               type="email"
+              autoComplete="email"
               id="email"
               name="email"
               className={`form-input ${errors.email ? 'input-error' : ''}`}
@@ -292,6 +289,7 @@ export const CandidateCVForm: React.FC = () => {
             <Phone size={16} className="input-icon" />
             <input
               type="tel"
+              autoComplete="tel"
               id="telephone"
               name="telephone"
               className={`form-input ${errors.telephone ? 'input-error' : ''}`}
@@ -442,6 +440,11 @@ export const CandidateCVForm: React.FC = () => {
         {errors.privacyConsent && <span className="form-error"><AlertCircle size={12} /> {errors.privacyConsent}</span>}
       </div>
 
+      {submitError && (
+        <div className="form-error" role="alert" style={{ marginBottom: '12px' }}>
+          {submitError}
+        </div>
+      )}
       <div className="form-submit-row">
         <button 
           type="submit" 

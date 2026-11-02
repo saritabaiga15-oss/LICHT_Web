@@ -7,6 +7,15 @@ export interface ApplicantWorkHistory {
   details: string;
 }
 
+export type EmployerApplicantStatus =
+  | 'Application Received'
+  | 'Under Review'
+  | 'Shortlisted'
+  | 'Interview Scheduled'
+  | 'Offer Extended'
+  | 'Declined'
+  | 'Placed';
+
 export interface EmployerApplicant {
   id: string;
   candidateName: string;
@@ -14,12 +23,12 @@ export interface EmployerApplicant {
   phone: string;
   location: string;
   appliedDate: string;
-  status: 'Under Review' | 'Shortlisted' | 'Interview Scheduled' | 'Offer Extended' | 'Declined';
+  status: EmployerApplicantStatus;
   dbsStatus: string;
   experienceYears: number;
   currentRole: string;
   cvFileName: string;
-  matchScore: number;
+  matchScore?: number;
   coverNote?: string;
   skills?: string[];
   education?: string[];
@@ -31,13 +40,22 @@ export interface EmployerApplicant {
 export interface EmployerJobListing {
   id: string;
   title: string;
-  sector: EmployerSector;
+  sector: string;
   location: string;
-  contractType: 'Permanent' | 'Temporary cover' | 'Full-time' | 'Night shifts' | 'Block booking';
+  contractType: string;
   payRate: string;
   postedDate: string;
   status: 'Active' | 'Paused' | 'Filled';
   applicants: EmployerApplicant[];
+  urgentCover?: boolean;
+}
+
+export interface NewJobInput {
+  title: string;
+  sector: string;
+  location: string;
+  contractType: string;
+  payRate: string;
   urgentCover?: boolean;
 }
 
@@ -46,15 +64,17 @@ export interface TalentCandidate {
   name: string;
   headline: string;
   role: string;
-  sector: EmployerSector;
+  sector: string;
   location: string;
   postcode: string;
   experienceYears: number;
+  experienceLevel: string;
   dbsStatus: string;
   availability: string;
-  expectedRate: string;
+  expectedRate?: string;
   skills: string[];
   certifications: string[];
+  // True only when LICHT has verified both DBS and Right to Work
   verified: boolean;
   avatarInitials: string;
   summary: string;
@@ -78,7 +98,7 @@ export interface EmployerAccount {
   email: string;
   phone: string;
   location: string;
-  cqcRating?: 'Outstanding' | 'Good' | 'Requires Improvement' | 'Pending Inspection';
+  cqcRating?: string;
   activeListingsCount: number;
   companyNumber?: string;
   cqcProviderId?: string;
@@ -86,12 +106,12 @@ export interface EmployerAccount {
   registeredAddress?: string;
   postcode?: string;
   website?: string;
-  primarySector?: EmployerSector;
+  primarySector?: string;
   documentsVerified?: boolean;
   uploadedDocuments?: EmployerUploadedDoc[];
   registrationDate?: string;
   verificationStatus: 'Pending' | 'Verified' | 'Rejected';
-  password?: string;
+  rejectionReason?: string;
 }
 
 export interface EmployerLoginResult {
@@ -100,23 +120,34 @@ export interface EmployerLoginResult {
   message?: string;
 }
 
+export interface EmployerActionResult {
+  success: boolean;
+  message?: string;
+}
+
+export interface EmployerRegistrationResult {
+  account: EmployerAccount;
+  /** One-hour token that can only upload compliance documents for this registration */
+  documentUploadToken?: string;
+}
+
 export interface EmployerContextType {
   employer: EmployerAccount | null;
   isEmployerAuthenticated: boolean;
-  employerLogin: (email: string, password?: string) => Promise<EmployerLoginResult> | EmployerLoginResult;
-  registerEmployer: (data: Partial<EmployerAccount>, password?: string) => Promise<EmployerAccount> | EmployerAccount;
-  updateEmployerProfile: (data: Partial<EmployerAccount>) => void;
+  isEmployerLoading: boolean;
+  employerLogin: (email: string, password: string) => Promise<EmployerLoginResult>;
+  registerEmployer: (data: Partial<EmployerAccount>, password: string) => Promise<EmployerRegistrationResult>;
+  updateEmployerProfile: (data: Partial<EmployerAccount>) => Promise<EmployerActionResult>;
   employerLogout: () => void;
+  refreshEmployerData: () => Promise<void>;
   jobListings: EmployerJobListing[];
-  postNewJob: (job: Omit<EmployerJobListing, 'id' | 'postedDate' | 'applicants'>) => void;
-  updateApplicantStatus: (jobId: string, applicantId: string, status: EmployerApplicant['status']) => void;
+  postNewJob: (job: NewJobInput) => Promise<EmployerActionResult>;
+  updateJobStatus: (jobId: string, status: EmployerJobListing['status']) => Promise<EmployerActionResult>;
+  updateApplicantStatus: (jobId: string, applicantId: string, status: EmployerApplicantStatus) => Promise<EmployerActionResult>;
+  downloadApplicantCv: (jobId: string, applicantId: string, fileName?: string) => Promise<EmployerActionResult>;
+  downloadDocument: (docId: string, fileName?: string) => Promise<EmployerActionResult>;
   talentPool: TalentCandidate[];
   savedCandidates: string[];
-  toggleSaveCandidate: (candidateId: string) => void;
-  requestCandidateInterview: (candidateId: string, message: string) => void;
-  allEmployers: EmployerAccount[];
-  approveEmployer: (employerId: string) => void;
-  rejectEmployer: (employerId: string, reason?: string) => void;
-  deleteEmployer: (employerId: string) => void;
+  toggleSaveCandidate: (candidateId: string) => Promise<EmployerActionResult>;
+  requestCandidateInterview: (candidateId: string, message: string) => Promise<EmployerActionResult>;
 }
-

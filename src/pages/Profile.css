@@ -1151,7 +1151,7 @@
   .profile-skills-grid,
   .saved-roles-grid,
   .education-profile-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1180,7 +1180,7 @@
 
 .education-profile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
   gap: 16px;
   margin-top: 14px;
 }
@@ -1304,11 +1304,11 @@
   }
 
   .profile-meta-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .education-profile-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .cv-upload-zone {
@@ -1325,7 +1325,7 @@
 
 @media (max-width: 600px) {
   .profile-stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .profile-headline {
@@ -1342,3 +1342,123 @@
 }
 
 
+
+/* ===== Candidate profile on phones =====
+   Put the candidate's own work (applications, CV, experience) ahead of the employer promo. */
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 20px 0 40px;
+  }
+  .profile-container {
+    display: flex;
+    flex-direction: column;
+  }
+  .profile-employer-banner {
+    order: 10;
+    margin-top: 24px;
+  }
+  .profile-meta-chips {
+    justify-content: center;
+  }
+  .profile-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .profile-header-actions .profile-employer-chip-btn {
+    display: none;
+  }
+  .profile-header-actions .profile-action-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+  }
+  .profile-header-actions .btn-profile-logout {
+    align-self: center;
+    min-height: 44px;
+  }
+  .profile-nav-tabs {
+    scroll-margin-top: calc(var(--navbar-height) + 12px);
+  }
+}
+
+/* ===== Add-education dialog (shares the look of .modal-backdrop / .modal-card) ===== */
+.profile-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(20, 33, 40, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 20px;
+}
+
+.profile-modal-card {
+  background: #ffffff;
+  border-radius: var(--radius-2xl, 24px);
+  max-width: 600px;
+  width: 100%;
+  padding: 32px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--color-hairline, #e3ded5);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.profile-modal-card .modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.profile-modal-card .modal-close-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  color: #475467;
+  background: #f2f4f7;
+}
+
+.profile-modal-card .modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-card {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Phones: dialogs slide up from the bottom as a sheet */
+@media (max-width: 600px) {
+  .profile-modal-overlay,
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .profile-modal-card,
+  .modal-card {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    max-height: 88vh;
+    border-radius: 20px 20px 0 0;
+    padding: 22px 18px calc(22px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.cv-card-main-meta {
+  min-width: 0;
+}
+.cv-card-filename {
+  overflow-wrap: anywhere;
+}
+.cv-card-meta-list {
+  flex-wrap: wrap;
+}

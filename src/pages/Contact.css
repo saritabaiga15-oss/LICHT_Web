@@ -556,7 +556,7 @@
    -------------------------------------------------------------------------- */
 @media (max-width: 991px) {
   .contact-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 36px;
   }
 
@@ -565,6 +565,19 @@
   }
 
   .form-row-2col {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* Long email addresses may break onto a new line on small phones */
+.side-channel-val {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.side-channel-val,
+.side-channel-label {
+  max-width: 100%;
+}
+.side-channel-item > * {
+  min-width: 0;
 }

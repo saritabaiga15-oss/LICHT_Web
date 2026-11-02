@@ -437,7 +437,7 @@
 
 @media (max-width: 640px) {
   .emp-input-row-2 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -593,14 +593,170 @@
 }
 
 
-/* Responsiveness */
+/* ==========================================================================
+   RESPONSIVENESS
+   ========================================================================== */
+
+/* Tablet: collapse side-by-side columns */
 @media (max-width: 991px) {
   .emp-login-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 40px;
   }
   .emp-login-intro {
     padding-right: 0;
+  }
+}
+
+/* Mobile: ≤ 640px */
+@media (max-width: 640px) {
+  /* Page shell */
+  .emp-login-page {
+    padding: 28px 0 80px;
+  }
+
+  .emp-login-container {
+    gap: 28px;
+    padding: 0 16px;
+  }
+
+  /* Intro / left panel */
+  .emp-login-title {
+    font-size: clamp(1.6rem, 7vw, 2.1rem);
+    margin-bottom: 14px;
+  }
+
+  .emp-login-perks {
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .emp-perk-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .emp-perk-item strong {
+    font-size: 0.875rem;
+  }
+
+  .emp-perk-item p {
+    font-size: 0.8125rem;
+  }
+
+  /* "Candidate Login" switch box — wrap on tiny screens */
+  .emp-switch-box {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 12px 14px;
+    font-size: 0.8125rem;
+  }
+
+  /* Card */
+  .emp-login-card {
+    border-radius: 16px;
+    padding: 20px 18px 28px;
+  }
+
+  /* Auth tab pills — smaller text so both fit on one line */
+  .emp-auth-tab {
+    font-size: 0.78125rem;
+    padding: 9px 8px;
+  }
+
+  /* Card header */
+  .emp-card-title {
+    font-size: 1.25rem;
+  }
+
+  .emp-card-subtitle {
+    font-size: 0.8125rem;
+  }
+
+  /* Form inputs */
+  .emp-input,
+  .emp-select {
+    height: 48px;          /* thumb-friendly tap target */
+    font-size: 1rem;       /* prevent iOS auto-zoom (≥16px effective) */
+  }
+
+  .emp-label {
+    font-size: 0.8125rem;
+  }
+
+  /* Two-column input rows collapse to single column */
+  .emp-input-row-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Submit button */
+  .emp-submit-btn {
+    height: 50px;
+    font-size: 0.9375rem;
+  }
+
+  /* Back + Continue button row — stack vertically */
+  .emp-btn-flex-row {
+    flex-direction: column;
+  }
+
+  .emp-back-btn {
+    width: 100%;
+    height: 46px;
+    justify-content: center;
+  }
+
+  /* Document upload slots — allow label to wrap */
+  .emp-doc-slot {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .emp-doc-slot-label {
+    white-space: normal;
+    font-size: 0.78125rem;
+  }
+
+  /* Uploaded doc pill — name truncates nicely */
+  .emp-doc-pill {
+    font-size: 0.75rem;
+  }
+
+  /* Registration submitted confirmation */
+  .emp-submitted-confirmation {
+    padding: 32px 12px;
+  }
+
+  .emp-submitted-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .emp-submitted-confirmation h3 {
+    font-size: 1.2rem;
+  }
+
+  .emp-submitted-confirmation p {
+    font-size: 0.875rem;
+  }
+}
+
+/* Extra-small: ≤ 380px (very narrow handsets) */
+@media (max-width: 380px) {
+  .emp-login-card {
+    padding: 16px 14px 24px;
+    border-radius: 12px;
+  }
+
+  .emp-auth-tab {
+    font-size: 0.71875rem;
+    padding: 8px 4px;
+  }
+
+  .emp-login-title {
+    font-size: 1.45rem;
   }
 }
 
@@ -739,4 +895,20 @@
 
 .emp-submitted-actions {
   margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+  /* Stack step number above its label so all three steps fit on a phone */
+  .emp-step-node {
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+  }
+  .emp-step-name {
+    font-size: 0.6875rem;
+    letter-spacing: 0.02em;
+  }
+  .emp-step-line {
+    margin: 0 6px 18px;
+  }
 }

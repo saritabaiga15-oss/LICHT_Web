@@ -384,3 +384,13 @@
     border-radius: 50%;
   }
 }
+
+/* Very small phones (e.g. iPhone SE 1st gen): Sign In stays reachable from the bottom bar */
+@media (max-width: 360px) {
+  .site-header__actions .header-cta-btn {
+    display: none;
+  }
+  .site-header__actions {
+    gap: 8px;
+  }
+}

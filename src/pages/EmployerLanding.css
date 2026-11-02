@@ -465,7 +465,7 @@
 /* Talent Cards Grid */
 .emp-talent-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
   gap: 24px;
 }
 
@@ -1145,7 +1145,7 @@
 
 .emp-applicants-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
   gap: 16px;
 }
 
@@ -1653,7 +1653,7 @@
 
 @media (max-width: 860px) {
   .emp-docs-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1848,7 +1848,7 @@
 /* Responsiveness */
 @media (max-width: 991px) {
   .emp-hero-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 36px;
   }
   .emp-stats-grid {
@@ -1859,7 +1859,7 @@
     display: none;
   }
   .emp-profile-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .emp-profile-card--full {
     grid-column: span 1;
@@ -1879,7 +1879,7 @@
   .emp-metrics-strip,
   .emp-form-grid,
   .emp-qform-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .emp-dash-header {
@@ -1891,10 +1891,155 @@
 
 @media (max-width: 640px) {
   .emp-stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     row-gap: 28px;
   }
   .emp-stat-item::after {
     display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .emp-filter-group {
+    flex-wrap: wrap;
+  }
+  .emp-filter-select {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+}
+
+/* ===== Employer portal on phones ===== */
+@media (max-width: 768px) {
+  .emp-dash-header {
+    padding: 20px;
+    align-items: stretch;
+  }
+  .emp-dash-header__left {
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .emp-dash-avatar {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 12px;
+  }
+  .emp-dash-badge-row {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .emp-dash-welcome {
+    font-size: 1.3rem;
+  }
+  .emp-dash-meta {
+    overflow-wrap: anywhere;
+  }
+  .emp-dash-header__right {
+    width: 100%;
+  }
+  .emp-dash-header__right > * {
+    flex: 1 1 0;
+    justify-content: center;
+    white-space: nowrap;
+    min-height: 44px;
+  }
+
+  .emp-metrics-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .emp-metric-card {
+    padding: 14px 16px;
+  }
+  .emp-metric-num {
+    font-size: 1.5rem;
+  }
+  .emp-metric-label {
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+
+  .emp-dash-tabs {
+    gap: 4px;
+    margin-bottom: 20px;
+  }
+  .emp-tab-btn {
+    padding: 12px 14px;
+    font-size: 0.875rem;
+  }
+
+  .emp-section-heading-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .emp-section-heading-row > button,
+  .emp-section-heading-row > a {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.emp-empty-applicants {
+  padding: 28px 20px;
+  border: 1px dashed rgba(10, 34, 44, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  color: #637780;
+  font-size: 0.9375rem;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .emp-dash-header__right .emp-header-action,
+  .emp-dash-header__right .btn-emp-logout {
+    white-space: nowrap;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+/* Leave room for the sticky site header when scrolling to the tabs */
+.emp-dash-tabs {
+  scroll-margin-top: calc(var(--navbar-height) + 12px);
+}
+
+@media (max-width: 768px) {
+  .emp-post-box {
+    padding: 28px 14px 14px;
+    gap: 24px;
+    border-radius: 20px;
+  }
+  .emp-post-box__left {
+    padding: 0 6px;
+  }
+  .emp-quick-form {
+    padding: 22px 18px;
+  }
+}
+
+/* Phones: dialogs slide up from the bottom as a sheet */
+@media (max-width: 600px) {
+  .emp-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .emp-modal-card {
+    max-width: none;
+    max-height: 88vh;
+    border-radius: 20px 20px 0 0;
+    padding: 22px 18px calc(22px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (max-width: 480px) {
+  .emp-profile-card__header {
+    flex-wrap: wrap;
+  }
+  .emp-verified-badge {
+    margin-left: 0;
   }
 }

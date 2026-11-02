@@ -43,6 +43,7 @@ export const Contact: React.FC = () => {
   const [formData, setFormData] = useState<ContactFormData>(initialContactData);
   const [errors, setErrors] = useState<Partial<Record<keyof ContactFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submittedRef, setSubmittedRef] = useState<string | null>(null);
 
   const validate = () => {
@@ -90,19 +91,13 @@ export const Contact: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      setSubmitError(null);
       const response = await submitContactForm(formData);
-      if (response && response.referenceCode) {
-        setSubmittedRef(response.referenceCode);
-      } else {
-        const refCode = `LICHT-CON-${Math.floor(10000 + Math.random() * 90000)}`;
-        setSubmittedRef(refCode);
-      }
+      // Only the server-issued reference proves the enquiry was stored
+      setSubmittedRef(response?.referenceCode || 'Submitted');
       setFormData(initialContactData);
-    } catch (err) {
-      // Fallback in case backend is offline
-      const refCode = `LICHT-CON-${Math.floor(10000 + Math.random() * 90000)}`;
-      setSubmittedRef(refCode);
-      setFormData(initialContactData);
+    } catch (err: any) {
+      setSubmitError(err?.message || 'We could not send your message. Please try again, or call us directly.');
     } finally {
       setIsSubmitting(false);
     }
@@ -217,6 +212,7 @@ export const Contact: React.FC = () => {
                       </label>
                       <input
                         type="email"
+                        autoComplete="email"
                         id="email"
                         name="email"
                         className={`form-field-input ${errors.email ? 'form-field-input--error' : ''}`}
@@ -239,6 +235,7 @@ export const Contact: React.FC = () => {
                       </label>
                       <input
                         type="tel"
+                        autoComplete="tel"
                         id="telephone"
                         name="telephone"
                         className="form-field-input"
@@ -309,6 +306,11 @@ export const Contact: React.FC = () => {
                     )}
                   </div>
 
+                  {submitError && (
+                    <div className="form-error" role="alert" style={{ marginBottom: '12px' }}>
+                      {submitError}
+                    </div>
+                  )}
                   <div className="form-submit-row">
                     <button 
                       type="submit" 
@@ -350,8 +352,8 @@ export const Contact: React.FC = () => {
                 </div>
                 <div>
                   <span className="side-channel-label">Email Enquiries</span>
-                  <a href="mailto:enquiries@lichtrecruitment.co.uk" className="side-channel-val side-channel-link">
-                    enquiries@lichtrecruitment.co.uk
+                  <a href="mailto:enquiries@lichtrecruitmentservices.com" className="side-channel-val side-channel-link">
+                    enquiries@lichtrecruitmentservices.com
                   </a>
                 </div>
               </div>

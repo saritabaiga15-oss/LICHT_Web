@@ -42,7 +42,7 @@ export const CookiePolicy: React.FC = () => {
           <div className="legal-card">
             <h2>4. Questions</h2>
             <p>
-              If you have any questions regarding our cookie practices, please contact us at <a href="mailto:enquiries@lichtrecruitment.co.uk">enquiries@lichtrecruitment.co.uk</a>.
+              If you have any questions regarding our cookie practices, please contact us at <a href="mailto:enquiries@lichtrecruitmentservices.com">enquiries@lichtrecruitmentservices.com</a>.
             </p>
           </div>
         </div>

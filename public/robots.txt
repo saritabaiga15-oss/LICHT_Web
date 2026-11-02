@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /admin
+Disallow: /profile
+Disallow: /login
+Disallow: /signup
+Disallow: /employer/login
+Disallow: /employer/register
+
+Sitemap: https://lichtrecruitmentservices.com/sitemap.xml

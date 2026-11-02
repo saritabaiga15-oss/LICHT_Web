@@ -20,3 +20,10 @@
   }
 }
 
+
+@media (max-width: 360px) {
+  .brand-logo__img {
+    height: 32px;
+    max-width: 140px;
+  }
+}

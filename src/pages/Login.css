@@ -30,6 +30,12 @@
   box-shadow: 0 10px 30px rgba(20, 33, 40, 0.04);
 }
 
+/* Desktop: the two halves are invisible wrappers, so the card lays out exactly as one block */
+.auth-intro-top,
+.auth-intro-bottom {
+  display: contents;
+}
+
 .auth-intro-header {
   display: flex;
   align-items: center;
@@ -378,12 +384,35 @@
 /* Responsive */
 @media (max-width: 900px) {
   .auth-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 32px;
   }
 
+  /* Phones: intro heading, then the sign-in form, then the benefits.
+     The intro card dissolves so its two halves can sit either side of the form. */
   .auth-intro-card {
-    padding: 32px 24px;
+    display: contents;
+  }
+  .auth-intro-top,
+  .auth-intro-bottom {
+    display: block;
+    background: rgba(252, 251, 248, 0.85);
+    border: 1px solid var(--color-hairline, #e3ded5);
+    border-radius: var(--radius-2xl, 24px);
+    padding: 28px 22px;
+    box-shadow: 0 10px 30px rgba(20, 33, 40, 0.04);
+  }
+  .auth-intro-top {
+    order: 0;
+  }
+  .auth-form-card {
+    order: 1;
+  }
+  .auth-intro-bottom {
+    order: 2;
+  }
+  .auth-intro-top .auth-intro-desc {
+    margin-bottom: 0;
   }
 
   .auth-form-card {

@@ -16,19 +16,22 @@ export interface SavedCV {
   fileUrl?: string;
 }
 
-export type ApplicationStatus = 
+export type ApplicationStatus =
   | 'Application Received'
   | 'Under Review'
   | 'Shortlisted'
   | 'Interview Scheduled'
-  | 'Offer Extended';
+  | 'Offer Extended'
+  | 'Declined'
+  | 'Placed';
 
 export interface JobApplication {
   id: string;
   jobId: string;
+  jobCode?: string;
   jobTitle: string;
   companyName: string;
-  sector: 'Care homes' | 'Healthcare' | 'Supported living' | 'Corporate';
+  sector: string;
   location: string;
   contractType: string;
   pay: string;
@@ -38,7 +41,7 @@ export interface JobApplication {
   notes?: string;
 }
 
-export type ExperienceLevel = 
+export type ExperienceLevel =
   | 'Student'
   | 'Fresher / Entry level'
   | '1+ years of experience'
@@ -54,6 +57,10 @@ export interface EducationItem {
   graduationYear: string;
 }
 
+/**
+ * Candidate profile as shown in the UI. Every string/array field is always defined
+ * (empty when the candidate has not provided it) so components never hit null.
+ */
 export interface UserProfile {
   id: string;
   fullName: string;
@@ -62,11 +69,15 @@ export interface UserProfile {
   location: string;
   postcode: string;
   headline: string;
-  experienceLevel: ExperienceLevel;
+  experienceLevel: string;
   education: EducationItem[];
-  targetSector: 'Care homes' | 'Healthcare' | 'Supported living' | 'Corporate';
-  availability: 'Immediately available' | '1 week notice' | '2 weeks notice' | '1 month notice';
-  dbsStatus: 'Enhanced DBS on Update Service' | 'Standard DBS' | 'In Progress' | 'Not Registered';
+  targetSector: string;
+  availability: string;
+  dbsStatus: string;
+  // Set only by the LICHT compliance team
+  dbsVerified: boolean;
+  rightToWorkVerified: boolean;
+  nmcPinVerified: boolean;
   bio: string;
   skills: string[];
   certifications: string[];
@@ -76,30 +87,30 @@ export interface UserProfile {
   savedJobs: string[];
 }
 
+export interface ActionResult {
+  success: boolean;
+  message?: string;
+}
+
 export interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
-  login: (email: string, password?: string) => Promise<{ success: boolean; message?: string }>;
-  signup: (profileData: Partial<UserProfile>) => Promise<{ success: boolean; message?: string }>;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<ActionResult>;
+  signup: (profileData: Partial<UserProfile> & { password: string }) => Promise<ActionResult>;
   logout: () => void;
-  updateProfile: (updates: Partial<UserProfile>) => void;
-  applyToJob: (job: {
-    id: string;
-    title: string;
-    sector: 'Care homes' | 'Healthcare' | 'Supported living' | 'Corporate';
-    location: string;
-    contract: string;
-    pay: string;
-    companyName?: string;
-  }, notes?: string) => boolean;
+  refreshProfile: () => Promise<void>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<ActionResult>;
+  applyToJob: (jobId: string, notes?: string) => Promise<ActionResult>;
   hasAppliedToJob: (jobId: string) => boolean;
-  withdrawApplication: (applicationId: string) => void;
-  updateCV: (cv: SavedCV) => void;
-  addExperience: (exp: Omit<ExperienceItem, 'id'>) => void;
-  deleteExperience: (id: string) => void;
-  addEducation: (edu: Omit<EducationItem, 'id'>) => void;
-  deleteEducation: (id: string) => void;
-  saveJob: (jobId: string) => void;
-  unsaveJob: (jobId: string) => void;
+  withdrawApplication: (applicationId: string) => Promise<ActionResult>;
+  uploadCV: (file: File) => Promise<ActionResult>;
+  downloadCV: () => Promise<ActionResult>;
+  addExperience: (exp: Omit<ExperienceItem, 'id'>) => Promise<ActionResult>;
+  deleteExperience: (id: string) => Promise<ActionResult>;
+  addEducation: (edu: Omit<EducationItem, 'id'>) => Promise<ActionResult>;
+  deleteEducation: (id: string) => Promise<ActionResult>;
+  saveJob: (jobId: string) => Promise<ActionResult>;
+  unsaveJob: (jobId: string) => Promise<ActionResult>;
   isJobSaved: (jobId: string) => boolean;
 }

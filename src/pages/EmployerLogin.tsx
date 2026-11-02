@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Building2, 
-  Lock, 
-  Mail, 
-  Eye, 
-  EyeOff, 
-  ArrowRight, 
-  ShieldCheck, 
-  CheckCircle2, 
+import {
+  Building2,
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  ShieldCheck,
+  CheckCircle2,
   Sparkles,
   Users,
   Briefcase,
@@ -22,6 +22,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useEmployer } from '../context/EmployerContext';
+import { uploadEmployerDocument } from '../services/api';
 import { EmployerSector, EmployerUploadedDoc } from '../types/employer';
 import './EmployerLogin.css';
 
@@ -31,6 +32,9 @@ interface EmployerLoginProps {
 
 export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'signin' }) => {
   const { employerLogin, registerEmployer, isEmployerAuthenticated } = useEmployer();
+  // Selected files are held here until the account exists and they can be uploaded
+  const [regDocFiles, setRegDocFiles] = useState<Record<string, File>>({});
+  const [regDocWarning, setRegDocWarning] = useState('');
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<'signin' | 'register'>(initialTab);
@@ -106,17 +110,6 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
     }
   };
 
-  // 1-Click Demo Login
-  const handleDemoSignIn = async () => {
-    setEmail('j.thorne@stjudecare.co.uk');
-    setPassword('••••••••••••');
-    setIsLoggingIn(true);
-    await employerLogin('j.thorne@stjudecare.co.uk');
-    setIsLoggingIn(false);
-    navigate('/employer');
-  };
-
-
   // Step 1 Validation
   const handleNextToStep2 = (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,7 +147,17 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
   // File upload handler
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, docType: string) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setRegError('Each document must be 10MB or smaller.');
+      return;
+    }
+    if (!/\.(pdf|docx?|jpe?g|png)$/i.test(file.name)) {
+      setRegError('Documents must be PDF, DOC, DOCX, JPG or PNG files.');
+      return;
+    }
+    setRegError('');
     const newDoc: EmployerUploadedDoc = {
       id: `doc-${Date.now()}`,
       name: file.name,
@@ -167,19 +170,25 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
       const filtered = prev.filter(d => d.type !== docType);
       return [...filtered, newDoc];
     });
+    setRegDocFiles(prev => ({ ...prev, [newDoc.id]: file }));
   };
 
   const removeDoc = (docId: string) => {
     setRegUploadedDocs(prev => prev.filter(d => d.id !== docId));
+    setRegDocFiles(prev => {
+      const next = { ...prev };
+      delete next[docId];
+      return next;
+    });
   };
 
   // Step 3 (Final Registration)
-  const handleCompleteRegistration = (e: React.FormEvent) => {
+  const handleCompleteRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegError('');
 
-    if (!regPassword || regPassword.length < 6) {
-      setRegError('Password must contain at least 6 characters.');
+    if (!regPassword || regPassword.length < 8 || !/[A-Za-z]/.test(regPassword) || !/\d/.test(regPassword)) {
+      setRegError('Password must be at least 8 characters and include a letter and a number.');
       return;
     }
     if (regPassword !== regConfirmPassword) {
@@ -193,25 +202,38 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
 
     setIsRegistering(true);
     try {
-      await registerEmployer({
+      const result = await registerEmployer({
         organisationName: regOrgName.trim(),
-        companyNumber: regCompanyNumber.trim() || `12${Math.floor(100000 + Math.random() * 900000)}`,
+        companyNumber: regCompanyNumber.trim() || undefined,
         facilityType: regFacilityType,
         primarySector: regPrimarySector,
         registeredAddress: regAddress.trim(),
         postcode: regPostcode.trim().toUpperCase(),
         location: `${regAddress.trim()}, ${regPostcode.trim().toUpperCase()}`,
-        website: regWebsite.trim() || 'https://www.carehome-portal.co.uk',
+        website: regWebsite.trim() || undefined,
         contactName: regContactName.trim(),
         roleTitle: regRoleTitle.trim(),
         email: regWorkEmail.trim(),
         phone: regPhone.trim(),
-        cqcProviderId: regCqcId.trim() || `1-${Math.floor(100000000 + Math.random() * 900000000)}`,
+        cqcProviderId: regCqcId.trim() || undefined,
         cqcRating: regCqcRating,
-        insurancePolicy: regInsurancePolicy.trim() || `UK-HIS-${Math.floor(100000 + Math.random() * 900000)}`,
-        documentsVerified: false,
-        uploadedDocuments: regUploadedDocs
+        insurancePolicy: regInsurancePolicy.trim() || undefined
       }, regPassword);
+
+      // Upload the chosen compliance documents with the one-time registration token
+      const failed: string[] = [];
+      for (const doc of regUploadedDocs) {
+        const file = regDocFiles[doc.id];
+        if (!file) continue;
+        try {
+          await uploadEmployerDocument(file, doc.type, result.documentUploadToken);
+        } catch (uploadErr: any) {
+          failed.push(`${doc.name} (${uploadErr?.message || 'upload failed'})`);
+        }
+      }
+      setRegDocWarning(failed.length
+        ? `Some documents could not be uploaded: ${failed.join('; ')}. Our compliance team will contact you to collect them.`
+        : '');
 
       setIsRegistering(false);
       setRegSubmitted(true);
@@ -308,29 +330,6 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
                   </p>
                 </div>
 
-                {/* 1-Click Demo Login Banner */}
-                <div className="emp-demo-banner">
-                  <div className="emp-demo-banner__top">
-                    <Sparkles size={16} className="text-gold" />
-                    <span className="emp-demo-label">1-Click Evaluation Sign-in</span>
-                  </div>
-                  <p className="emp-demo-desc">
-                    Sign in instantly as <strong>Dr. Julian Thorne</strong> (Director at <em>St. Jude Care Pavilion</em>) with pre-loaded applicants and vacancies.
-                  </p>
-                  <button 
-                    type="button" 
-                    onClick={handleDemoSignIn} 
-                    className="btn-pill-green emp-demo-btn"
-                    disabled={isLoggingIn}
-                  >
-                    Sign in as St. Jude Care Pavilion ↗
-                  </button>
-                </div>
-
-                <div className="emp-divider">
-                  <span>or sign in with work credentials</span>
-                </div>
-
                 {loginError && (
                   <div className="emp-error-box" role="alert">
                     <span>{loginError}</span>
@@ -351,6 +350,7 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
                       <input
                         id="emp-email"
                         type="email"
+                        autoComplete="email"
                         className="emp-input"
                         placeholder="director@healthcare-group.co.uk"
                         value={email}
@@ -363,15 +363,16 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
                   <div className="emp-input-group">
                     <div className="emp-label-row">
                       <label htmlFor="emp-pwd" className="emp-label">Password</label>
-                      <a href="#forgot" onClick={(e) => { e.preventDefault(); alert('Password reset link sent to your work email.'); }} className="emp-forgot-link">
+                      <Link to="/contact" className="emp-forgot-link" title="Contact our team to reset your password">
                         Forgot password?
-                      </a>
+                      </Link>
                     </div>
                     <div className="emp-input-wrap">
                       <Lock size={18} className="emp-input-icon" />
                       <input
                         id="emp-pwd"
                         type={showPassword ? 'text' : 'password'}
+                        autoComplete="current-password"
                         className="emp-input"
                         placeholder="••••••••••••"
                         value={password}
@@ -389,9 +390,9 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
                     </div>
                   </div>
 
-                  <button 
-                    type="submit" 
-                    className="btn-pill-green emp-submit-btn" 
+                  <button
+                    type="submit"
+                    className="btn-pill-green emp-submit-btn"
                     disabled={isLoggingIn}
                   >
                     {isLoggingIn ? 'Signing in...' : 'Sign In to Portal'}
@@ -402,8 +403,8 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
                 <div className="emp-card-footer">
                   <p>
                     Need to register a new healthcare facility?{' '}
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => setActiveTab('register')}
                       className="emp-link-btn"
                     >
@@ -608,6 +609,7 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
                           <input
                             id="reg-work-email"
                             type="email"
+                            autoComplete="email"
                             className="emp-input"
                             placeholder="j.thorne@carehome.co.uk"
                             value={regWorkEmail}
@@ -624,6 +626,7 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
                           <input
                             id="reg-phone"
                             type="tel"
+                            autoComplete="tel"
                             className="emp-input"
                             placeholder="+44 20 7946 0812"
                             value={regPhone}
@@ -759,8 +762,9 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
                           <input
                             id="reg-pwd"
                             type="password"
+                            autoComplete="new-password"
                             className="emp-input"
-                            placeholder="At least 6 characters"
+                            placeholder="Min. 8 characters, letters + numbers"
                             value={regPassword}
                             onChange={(e) => setRegPassword(e.target.value)}
                             required
@@ -775,6 +779,7 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
                           <input
                             id="reg-confirm-pwd"
                             type="password"
+                            autoComplete="new-password"
                             className="emp-input"
                             placeholder="Repeat password"
                             value={regConfirmPassword}
@@ -807,9 +812,9 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
                       >
                         <ArrowLeft size={16} /> Back
                       </button>
-                      <button 
-                        type="submit" 
-                        className="btn-pill-green emp-submit-btn" 
+                      <button
+                        type="submit"
+                        className="btn-pill-green emp-submit-btn"
                         style={{ flex: 1 }}
                         disabled={isRegistering}
                       >
@@ -831,8 +836,13 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
                       Thank you, <strong>{regContactName || regOrgName}</strong>. Your company registration for <strong>{regOrgName}</strong> has been submitted to the LICHT Admin Compliance Desk.
                     </p>
                     <p className="emp-submitted-sub">
-                      Our team will review your uploaded documents and verify your organisation. You'll receive a confirmation email at <strong>{regWorkEmail}</strong> once approved. This typically takes 1–2 business days.
+                      Our team will review your details and documents and verify your organisation. We'll contact you at <strong>{regWorkEmail}</strong> once your account is approved — you can then sign in. This typically takes 1–2 business days.
                     </p>
+                    {regDocWarning && (
+                      <div className="emp-error-box" role="alert">
+                        <span>{regDocWarning}</span>
+                      </div>
+                    )}
                     <div className="emp-submitted-actions">
                       <button
                         type="button"
@@ -848,8 +858,8 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
                 <div className="emp-card-footer">
                   <p>
                     Already have an employer account?{' '}
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => setActiveTab('signin')}
                       className="emp-link-btn"
                     >

@@ -28,6 +28,7 @@ import { EmployerLogin } from './pages/EmployerLogin';
 import { AdminPortal } from './pages/AdminPortal';
 import { AuthProvider } from './context/AuthContext';
 import { EmployerProvider } from './context/EmployerContext';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
@@ -47,6 +48,7 @@ const AppShell: React.FC = () => {
     <div className="site-wrapper">
       {!isAdmin && <Navbar />}
       <main id="main-content" tabIndex={-1}>
+        <ErrorBoundary resetKey={pathname}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
@@ -78,6 +80,7 @@ const AppShell: React.FC = () => {
           <Route path="/terms" element={<Terms />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </ErrorBoundary>
       </main>
       {!isAdmin && <Footer />}
       {!isAdmin && <MobileBottomNav />}

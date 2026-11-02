@@ -315,7 +315,7 @@
 /* Responsive */
 @media (max-width: 1024px) {
   .intro-grid, .mission-vision-grid, .vetting-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 3rem;
   }
   .values-grid {
@@ -331,6 +331,6 @@
     font-size: 2.2rem;
   }
   .values-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }

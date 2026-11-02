@@ -1,45 +1,79 @@
-import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { 
-  MapPin, 
-  Briefcase, 
-  Clock, 
-  Hash, 
-  Info, 
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useLocation } from 'react-router-dom';
+import {
+  MapPin,
+  Briefcase,
+  Clock,
+  Hash,
+  Info,
   Check,
   CheckCircle2,
   FileText,
   Sparkles
 } from 'lucide-react';
-import { SAMPLE_VACANCIES, Vacancy } from '../data/mockData';
+import { Vacancy, mapJobToVacancy } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
+import { fetchJobById } from '../services/api';
 import './OpportunityDetail.css';
 
 export const OpportunityDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user, isAuthenticated, applyToJob, hasAppliedToJob } = useAuth();
+  const location = useLocation();
   const [justApplied, setJustApplied] = useState(false);
+  const [job, setJob] = useState<Vacancy | null>(null);
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'missing'>('loading');
+  const [applying, setApplying] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
 
-  // If no ID or ID not found, default to first vacancy (CA-101) so Screenshot 5 always shows
-  const job: Vacancy = 
-    SAMPLE_VACANCIES.find((v) => v.id.toLowerCase() === id?.toLowerCase()) || 
-    SAMPLE_VACANCIES[0];
+  useEffect(() => {
+    if (!id) return;
+    setLoadState('loading');
+    fetchJobById(id)
+      .then((data) => {
+        setJob(mapJobToVacancy(data));
+        setLoadState('ready');
+      })
+      .catch(() => setLoadState('missing'));
+  }, [id]);
 
-  const alreadyApplied = hasAppliedToJob(job.id) || justApplied;
+  if (loadState !== 'ready' || !job) {
+    return (
+      <div className="job-detail-page">
+        <div className="container">
+          <div className="job-detail-nav">
+            <Link to="/opportunities" className="job-back-link">← Back to opportunities</Link>
+          </div>
+          <div className="job-detail-header">
+            {loadState === 'loading' ? (
+              <p>Loading vacancy…</p>
+            ) : (
+              <>
+                <h1 className="job-detail-title">This vacancy is no longer available</h1>
+                <p className="job-section-p">It may have been filled or withdrawn by the employer.</p>
+                <Link to="/opportunities" className="btn-pill-green" style={{ marginTop: '16px' }}>
+                  Browse current opportunities ↗
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const handleApplyClick = () => {
-    if (!isAuthenticated) return;
-    const success = applyToJob({
-      id: job.id,
-      title: job.title,
-      sector: job.sector,
-      location: job.location,
-      contract: job.contract,
-      pay: job.pay,
-      companyName: `${job.sector} Placement Partner (${job.location})`
-    });
-    if (success) {
+  const alreadyApplied = hasAppliedToJob(job.dbId || job.id) || justApplied;
+
+  const handleApplyClick = async () => {
+    if (!isAuthenticated || applying) return;
+    setApplying(true);
+    setApplyError(null);
+    const res = await applyToJob(job.dbId || job.id);
+    setApplying(false);
+    if (res.success) {
       setJustApplied(true);
+    } else {
+      setApplyError(res.message || 'Could not submit your application.');
     }
   };
 
@@ -51,17 +85,6 @@ export const OpportunityDetail: React.FC = () => {
           <Link to="/opportunities" className="job-back-link">
             ← Back to opportunities <span className="arrow-up-right">↗</span>
           </Link>
-        </div>
-
-        {/* Demo Notice Banner */}
-        <div className="opp-notice-banner job-detail-banner">
-          <Info size={18} className="opp-notice-icon" />
-          <div>
-            <strong className="opp-notice-title">Example role · Not a live vacancy</strong>
-            <p className="opp-notice-text">
-              This page illustrates the role details and application journey.
-            </p>
-          </div>
         </div>
 
         {/* Header: Badge, Title, Meta */}
@@ -95,11 +118,12 @@ export const OpportunityDetail: React.FC = () => {
           <div className="job-detail-main">
             {/* Meaning */}
             <section className="job-section">
-              <h2 className="job-section-heading">A role with everyday meaning.</h2>
-              <p className="job-section-p">{job.roleMeaning}</p>
+              <h2 className="job-section-heading">About the role</h2>
+              <p className="job-section-p">{job.roleMeaning || job.summary || 'Full role details will be shared by our consultants when you apply.'}</p>
             </section>
 
             {/* Involves */}
+            {job.whatRoleInvolves.length > 0 && (
             <section className="job-section">
               <h2 className="job-section-heading">What the role involves</h2>
               <ul className="job-check-list" role="list">
@@ -111,8 +135,10 @@ export const OpportunityDetail: React.FC = () => {
                 ))}
               </ul>
             </section>
+            )}
 
             {/* Brings */}
+            {job.whatYouBring.length > 0 && (
             <section className="job-section">
               <h2 className="job-section-heading">What you bring</h2>
               <ul className="job-check-list" role="list">
@@ -124,12 +150,15 @@ export const OpportunityDetail: React.FC = () => {
                 ))}
               </ul>
             </section>
+            )}
 
             {/* Before Apply */}
-            <section className="job-section">
-              <h2 className="job-section-heading">Before you apply</h2>
-              <p className="job-section-p">{job.beforeYouApply}</p>
-            </section>
+            {job.beforeYouApply && (
+              <section className="job-section">
+                <h2 className="job-section-heading">Before you apply</h2>
+                <p className="job-section-p">{job.beforeYouApply}</p>
+              </section>
+            )}
 
             {/* Adjustment Callout Box */}
             <div className="job-adjustment-card">
@@ -186,21 +215,25 @@ export const OpportunityDetail: React.FC = () => {
                   </div>
                 ) : isAuthenticated ? (
                   <>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={handleApplyClick}
                       className="btn-pill-green glance-apply-btn"
                       style={{ width: '100%', justifyContent: 'center' }}
+                      disabled={applying}
                     >
-                      Apply with Saved CV <span className="arrow-up-right">↗</span>
+                      {applying ? 'Submitting…' : <>Apply with Saved CV <span className="arrow-up-right">↗</span></>}
                     </button>
+                    {applyError && <p className="glance-subtext" role="alert" style={{ color: '#b42318' }}>{applyError}</p>}
                     <p className="glance-subtext">
-                      Attaches <strong>{user?.savedCV?.fileName || 'your saved CV'}</strong> from your candidate profile.
+                      {user?.savedCV
+                        ? <>Attaches <strong>{user.savedCV.fileName}</strong> from your candidate profile.</>
+                        : <>No CV on file yet — <Link to="/profile" className="gold-link">upload one in your profile</Link> first.</>}
                     </p>
                   </>
                 ) : (
                   <>
-                    <Link to="/login" className="btn-pill-green glance-apply-btn">
+                    <Link to="/login" state={{ from: location }} className="btn-pill-green glance-apply-btn">
                       Sign in to Apply <span className="arrow-up-right">↗</span>
                     </Link>
                     <p className="glance-subtext">
@@ -213,10 +246,10 @@ export const OpportunityDetail: React.FC = () => {
 
             {/* Photo below At a Glance card */}
             <div className="job-sidebar-photo-wrap">
-              <img 
-                src={job.image || "/assets/care_home_sector.jpg"} 
+              <img
+                src={job.image || "/assets/care_home_sector.jpg"}
                 alt={`${job.title} at work`}
-                className="job-sidebar-photo" 
+                className="job-sidebar-photo"
               />
             </div>
           </aside>
@@ -239,11 +272,12 @@ export const OpportunityDetail: React.FC = () => {
               type="button"
               onClick={handleApplyClick}
               className="btn-pill-green sticky-apply-btn"
+              disabled={applying}
             >
               Apply with CV ↗
             </button>
           ) : (
-            <Link to="/login" className="btn-pill-green sticky-apply-btn">
+            <Link to="/login" state={{ from: location }} className="btn-pill-green sticky-apply-btn">
               Apply ↗
             </Link>
           )}

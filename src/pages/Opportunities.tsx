@@ -11,17 +11,20 @@ import {
   ChevronRight,
   ChevronDown
 } from 'lucide-react';
-import { SAMPLE_VACANCIES, Vacancy } from '../data/mockData';
+import { Vacancy, mapJobToVacancy } from '../data/mockData';
 import { fetchJobs } from '../services/api';
 import './Opportunities.css';
 
 export const Opportunities: React.FC = () => {
-  const [vacancies, setVacancies] = useState<Vacancy[]>(SAMPLE_VACANCIES);
+  const [vacancies, setVacancies] = useState<Vacancy[]>([]);
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [keyword, setKeyword] = useState('');
   const [locationSearch, setLocationSearch] = useState('');
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('relevant');
+  // On phones the filter panel starts collapsed so results are visible straight away
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const handleSectorChange = (sector: string) => {
     setSelectedSectors((prev) =>
@@ -42,18 +45,20 @@ export const Opportunities: React.FC = () => {
     setLocationSearch('');
   };
 
-  useEffect(() => {
+  const loadJobs = () => {
+    setLoadState('loading');
     fetchJobs()
       .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setVacancies(data);
-        }
+        setVacancies(Array.isArray(data) ? data.map(mapJobToVacancy) : []);
+        setLoadState('ready');
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => setLoadState('error'));
+  };
+
+  useEffect(loadJobs, []);
 
   const filteredVacancies = useMemo(() => {
-    return vacancies.filter((v: Vacancy) => {
+    const list = vacancies.filter((v: Vacancy) => {
       // Keyword filter
       if (keyword.trim()) {
         const query = keyword.toLowerCase();
@@ -75,14 +80,17 @@ export const Opportunities: React.FC = () => {
 
       // Type filter
       if (selectedTypes.length > 0) {
-        const matchesContract = selectedTypes.includes(v.contract);
-        const matchesPattern = selectedTypes.includes(v.workingPattern);
-        if (!matchesContract && !matchesPattern) return false;
+        const haystack = `${v.type} ${v.contract} ${v.workingPattern}`.toLowerCase();
+        if (!selectedTypes.some(t => haystack.includes(t.toLowerCase()))) return false;
       }
 
       return true;
     });
-  }, [keyword, locationSearch, selectedSectors, selectedTypes]);
+    if (sortBy === 'recent') {
+      return [...list].sort((a, b) => (b.postedDate || '').localeCompare(a.postedDate || ''));
+    }
+    return list;
+  }, [vacancies, keyword, locationSearch, selectedSectors, selectedTypes, sortBy]);
 
   return (
     <div className="opportunities-page">
@@ -136,16 +144,17 @@ export const Opportunities: React.FC = () => {
             </button>
           </div>
 
-          {/* Illustrative Notice Banner */}
-          <div className="opp-notice-banner">
-            <Info size={18} className="opp-notice-icon" />
-            <div>
-              <strong className="opp-notice-title">Illustrative opportunities</strong>
-              <p className="opp-notice-text">
-                These example roles demonstrate the candidate experience; they are not live vacancies.
-              </p>
+          {loadState === 'error' && (
+            <div className="opp-notice-banner" role="alert">
+              <Info size={18} className="opp-notice-icon" />
+              <div>
+                <strong className="opp-notice-title">We couldn't load vacancies</strong>
+                <p className="opp-notice-text">
+                  Please check your connection and <button type="button" className="clear-filters-btn" onClick={loadJobs}>try again</button>.
+                </p>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -153,11 +162,22 @@ export const Opportunities: React.FC = () => {
       <section className="opp-main-section">
         <div className="container opp-main-grid">
           {/* Left Column: Filter Sidebar */}
-          <aside className="opp-filter-sidebar" aria-label="Job filters">
-            <div className="filter-header">
-              <h3 className="filter-title">Filter opportunities</h3>
-              <SlidersHorizontal size={18} color="#475467" />
-            </div>
+          <aside className={`opp-filter-sidebar ${filtersOpen ? '' : 'opp-filter-sidebar--collapsed'}`} aria-label="Job filters">
+            <button
+              type="button"
+              className="filter-header"
+              onClick={() => setFiltersOpen(open => !open)}
+              aria-expanded={filtersOpen}
+            >
+              <h3 className="filter-title">
+                Filter opportunities
+                {selectedSectors.length + selectedTypes.length > 0 && (
+                  <span className="filter-active-count">{selectedSectors.length + selectedTypes.length}</span>
+                )}
+              </h3>
+              <SlidersHorizontal size={18} color="#475467" className="filter-header-icon" />
+              <ChevronDown size={18} color="#475467" className="filter-header-chevron" />
+            </button>
 
             {/* Sector Filters */}
             <div className="filter-group">
@@ -206,7 +226,7 @@ export const Opportunities: React.FC = () => {
           <main className="opp-results-col">
             <div className="opp-results-header">
               <span className="opp-results-count">
-                {filteredVacancies.length} example {filteredVacancies.length === 1 ? 'opportunity' : 'opportunities'}
+                {loadState === 'loading' ? 'Loading vacancies…' : `${filteredVacancies.length} live ${filteredVacancies.length === 1 ? 'opportunity' : 'opportunities'}`}
               </span>
 
               <div className="opp-sort-wrap">
@@ -224,9 +244,9 @@ export const Opportunities: React.FC = () => {
 
             {/* Job Cards */}
             <div className="opp-cards-list">
-              {filteredVacancies.length === 0 ? (
+              {loadState === 'loading' ? null : filteredVacancies.length === 0 ? (
                 <div className="no-vacancies-box">
-                  <p>No matching opportunities found for your criteria.</p>
+                  <p>{vacancies.length === 0 ? 'There are no open vacancies right now. Send us your CV and we will match you to new roles.' : 'No matching opportunities found for your criteria.'}</p>
                   <button type="button" onClick={clearFilters} className="btn-pill-outline" style={{ marginTop: '12px' }}>
                     Reset all filters
                   </button>

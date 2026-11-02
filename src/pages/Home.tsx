@@ -133,9 +133,9 @@ export const Home: React.FC = () => {
                 {/* Cell 1 */}
                 <div className="bento-cell">
                   <p className="bento-cell-label">
-                    years into reimagining workforce reliability and specialist matching.
+                    and right-to-work checks for every candidate we put forward.
                   </p>
-                  <span className="bento-cell-number">10+</span>
+                  <span className="bento-cell-number">DBS</span>
                 </div>
 
                 {/* Cell 2 */}
@@ -149,9 +149,9 @@ export const Home: React.FC = () => {
                 {/* Cell 3 */}
                 <div className="bento-cell">
                   <p className="bento-cell-label">
-                    vetted candidates and dependable placements across the UK.
+                    for candidates to register, upload a CV and apply for roles.
                   </p>
-                  <span className="bento-cell-number">2.5k</span>
+                  <span className="bento-cell-number">Free</span>
                 </div>
 
                 {/* Cell 4: High-Contrast Forest Green Cell */}

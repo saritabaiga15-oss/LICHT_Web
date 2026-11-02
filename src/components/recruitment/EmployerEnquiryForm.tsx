@@ -53,6 +53,7 @@ export const EmployerEnquiryForm: React.FC = () => {
   const [formData, setFormData] = useState<FormData>(initialData);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState<string | null>(null);
 
   const validate = () => {
@@ -107,19 +108,13 @@ export const EmployerEnquiryForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      setSubmitError(null);
       const res = await submitEmployerStaffingForm(formData);
-      if (res && res.referenceCode) {
-        setSubmissionSuccess(res.referenceCode);
-      } else {
-        const refNumber = `LICHT-EMP-${Math.floor(10000 + Math.random() * 90000)}`;
-        setSubmissionSuccess(refNumber);
-      }
+      // Only the server-issued reference proves the enquiry was stored
+      setSubmissionSuccess(res?.referenceCode || 'Submitted');
       setFormData(initialData);
-    } catch (err) {
-      // Fallback
-      const refNumber = `LICHT-EMP-${Math.floor(10000 + Math.random() * 90000)}`;
-      setSubmissionSuccess(refNumber);
-      setFormData(initialData);
+    } catch (err: any) {
+      setSubmitError(err?.message || 'We could not send your enquiry. Please try again, or call us directly.');
     } finally {
       setIsSubmitting(false);
     }
@@ -206,6 +201,7 @@ export const EmployerEnquiryForm: React.FC = () => {
             <Mail size={16} className="input-icon" />
             <input
               type="email"
+              autoComplete="email"
               id="businessEmail"
               name="businessEmail"
               className={`form-input ${errors.businessEmail ? 'input-error' : ''}`}
@@ -225,6 +221,7 @@ export const EmployerEnquiryForm: React.FC = () => {
             <Phone size={16} className="input-icon" />
             <input
               type="tel"
+              autoComplete="tel"
               id="telephone"
               name="telephone"
               className={`form-input ${errors.telephone ? 'input-error' : ''}`}
@@ -396,6 +393,11 @@ export const EmployerEnquiryForm: React.FC = () => {
         {errors.privacyConsent && <span className="form-error"><AlertCircle size={12} /> {errors.privacyConsent}</span>}
       </div>
 
+      {submitError && (
+        <div className="form-error" role="alert" style={{ marginBottom: '12px' }}>
+          {submitError}
+        </div>
+      )}
       <div className="form-submit-row">
         <button 
           type="submit" 

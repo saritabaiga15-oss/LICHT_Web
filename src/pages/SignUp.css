@@ -613,14 +613,27 @@
   .form-grid-2,
   .form-grid-3,
   .availability-options-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
+  /* Compact horizontal stepper: number on top, short label underneath */
   .stepper-track {
-    flex-direction: column;
     align-items: flex-start;
+    gap: 6px;
+  }
+  .step-node {
+    flex-direction: column;
+    gap: 6px;
+    flex: 0 0 84px;
+    text-align: center;
+  }
+  .step-label {
+    white-space: normal;
+    font-size: 0.75rem;
+    line-height: 1.25;
   }
   .step-line {
-    display: none;
+    min-width: 12px;
+    margin-top: 16px;
   }
   .cv-upload-card {
     flex-direction: column;

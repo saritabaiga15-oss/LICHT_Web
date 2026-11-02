@@ -132,14 +132,14 @@
 
 @media (max-width: 1024px) {
   .sector-hero-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 2.5rem;
   }
   .standards-grid {
     grid-template-columns: repeat(2, 1fr);
   }
   .roles-detailed-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -148,6 +148,6 @@
     font-size: 2.25rem;
   }
   .standards-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }

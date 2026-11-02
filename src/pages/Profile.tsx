@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   User, 
@@ -26,7 +26,8 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { SAMPLE_VACANCIES } from '../data/mockData';
+import { Vacancy, mapJobToVacancy } from '../data/mockData';
+import { fetchJobs } from '../services/api';
 import './Profile.css';
 
 export const Profile: React.FC = () => {
@@ -34,7 +35,9 @@ export const Profile: React.FC = () => {
     user, 
     logout, 
     withdrawApplication, 
-    updateCV, 
+    uploadCV,
+    downloadCV,
+    isLoading, 
     addExperience, 
     deleteExperience,
     addEducation,
@@ -63,6 +66,23 @@ export const Profile: React.FC = () => {
   const [newEndDate, setNewEndDate] = useState('');
   const [newCurrent, setNewCurrent] = useState(false);
   const [newResp, setNewResp] = useState('');
+  const [liveJobs, setLiveJobs] = useState<Vacancy[]>([]);
+
+  useEffect(() => {
+    fetchJobs()
+      .then((data) => setLiveJobs(Array.isArray(data) ? data.map(mapJobToVacancy) : []))
+      .catch(() => setLiveJobs([]));
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="profile-page">
+        <div className="container profile-empty-state">
+          <p>Loading your profile…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -90,61 +110,41 @@ export const Profile: React.FC = () => {
     navigate('/', { replace: true });
   };
 
-  const handleCvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const sizeKb = Math.round(file.size / 1024);
-      updateCV({
-        fileName: file.name,
-        fileSize: `${sizeKb} KB`,
-        uploadedDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-      });
-      triggerToast(`Saved CV updated: ${file.name}`);
+  const handleCvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      triggerToast('CV must be 10MB or smaller.');
+      return;
     }
+    const res = await uploadCV(file);
+    triggerToast(res.success ? `Saved CV updated: ${file.name}` : (res.message || 'CV upload failed.'));
   };
 
-  const handleMockDownloadCV = () => {
+  const handleDownloadCV = async () => {
     if (!user.savedCV) return;
-    const blob = new Blob([
-      `LICHT RECRUITMENT SERVICES LIMITED - CANDIDATE RESUME\n\n` +
-      `Candidate: ${user.fullName}\n` +
-      `Email: ${user.email}\n` +
-      `Phone: ${user.phone}\n` +
-      `Location: ${user.location}\n` +
-      `Target Sector: ${user.targetSector}\n` +
-      `DBS Clearance: ${user.dbsStatus}\n` +
-      `Availability: ${user.availability}\n\n` +
-      `PROFILE SUMMARY:\n${user.bio}\n\n` +
-      `PREVIOUS EXPERIENCE:\n` +
-      user.previousExperience.map(e => `- ${e.jobTitle} at ${e.company} (${e.startDate} – ${e.current ? 'Present' : e.endDate})\n  ${e.responsibilities}`).join('\n\n') +
-      `\n\nCORE SKILLS:\n` + user.skills.join(', ') +
-      `\n\nCERTIFICATIONS:\n` + user.certifications.join(', ')
-    ], { type: 'text/plain' });
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = user.savedCV.fileName.replace(/\.pdf$/i, '.txt');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    triggerToast('CV downloaded successfully.');
+    const res = await downloadCV();
+    if (!res.success) triggerToast(res.message || 'Could not download your CV.');
   };
 
-  const handleSaveNewExperience = (e: React.FormEvent) => {
+  const handleSaveNewExperience = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim() || !newCompany.trim()) return;
 
-    addExperience({
+    const res = await addExperience({
       jobTitle: newTitle.trim(),
       company: newCompany.trim(),
-      location: newLocation.trim() || user.location,
-      startDate: newStartDate.trim() || '2024',
-      endDate: newCurrent ? 'Present' : (newEndDate.trim() || '2025'),
+      location: newLocation.trim(),
+      startDate: newStartDate.trim(),
+      endDate: newCurrent ? 'Present' : newEndDate.trim(),
       current: newCurrent,
-      responsibilities: newResp.trim() || 'Supported daily operations and service user care plans.'
+      responsibilities: newResp.trim()
     });
+    if (!res.success) {
+      triggerToast(res.message || 'Could not add experience.');
+      return;
+    }
 
     setNewTitle('');
     setNewCompany('');
@@ -157,16 +157,20 @@ export const Profile: React.FC = () => {
     triggerToast('New experience entry added to profile.');
   };
 
-  const handleSaveNewEducation = (e: React.FormEvent) => {
+  const handleSaveNewEducation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEduQual.trim()) return;
 
-    addEducation({
+    const res = await addEducation({
       qualification: newEduQual.trim(),
-      fieldOfStudy: newEduField.trim() || 'Health & Social Care',
-      institution: newEduInst.trim() || 'City & Guilds / College',
-      graduationYear: newEduYear.trim() || '2024'
+      fieldOfStudy: newEduField.trim(),
+      institution: newEduInst.trim(),
+      graduationYear: newEduYear.trim()
     });
+    if (!res.success) {
+      triggerToast(res.message || 'Could not add qualification.');
+      return;
+    }
 
     setNewEduQual('NVQ / Diploma (Level 2 or 3 in Health & Social Care)');
     setNewEduField('');
@@ -177,7 +181,8 @@ export const Profile: React.FC = () => {
   };
 
   // Get saved vacancies data
-  const savedVacanciesList = SAMPLE_VACANCIES.filter(v => user.savedJobs.includes(v.id));
+  const savedVacanciesList = liveJobs.filter(v => user.savedJobs.includes(v.id) || user.savedJobs.includes(v.dbId || ''));
+  const fullyVerified = user.dbsVerified && user.rightToWorkVerified;
 
   // Count active applications
   const inReviewCount = user.appliedJobs.filter(
@@ -200,19 +205,19 @@ export const Profile: React.FC = () => {
           <div className="profile-header-top">
             <div className="profile-avatar-wrap">
               <div className="profile-avatar-initials">
-                {user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                {user.fullName.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
               </div>
-              <span className="profile-verified-dot" title="DBS & ID Verified" />
+              {fullyVerified && <span className="profile-verified-dot" title="DBS & Right to Work verified by LICHT" />}
             </div>
 
             <div className="profile-header-details">
               <div className="profile-name-row">
                 <h1 className="profile-name">{user.fullName}</h1>
-                <span className="profile-dbs-badge">
+                <span className="profile-dbs-badge" title={user.dbsVerified ? 'Checked by the LICHT compliance team' : 'Awaiting check by the LICHT compliance team'}>
                   <ShieldCheck size={14} />
-                  <span>{user.dbsStatus.includes('Enhanced') ? 'Enhanced DBS Verified' : 'DBS Registered'}</span>
+                  <span>{user.dbsVerified ? 'DBS Verified by LICHT' : 'DBS check pending'}</span>
                 </span>
-                <span className="profile-sector-badge">{user.targetSector}</span>
+                {user.targetSector && <span className="profile-sector-badge">{user.targetSector}</span>}
                 {user.experienceLevel && (
                   <span className="profile-exp-badge">
                     <Briefcase size={13} />
@@ -224,22 +229,28 @@ export const Profile: React.FC = () => {
               <p className="profile-headline">{user.headline}</p>
 
               <div className="profile-meta-chips">
-                <span className="meta-chip">
-                  <MapPin size={14} className="meta-chip-icon" />
-                  {user.location} {user.postcode && `(${user.postcode})`}
-                </span>
+                {(user.location || user.postcode) && (
+                  <span className="meta-chip">
+                    <MapPin size={14} className="meta-chip-icon" />
+                    {user.location} {user.postcode && `(${user.postcode})`}
+                  </span>
+                )}
                 <span className="meta-chip">
                   <Mail size={14} className="meta-chip-icon" />
                   {user.email}
                 </span>
-                <span className="meta-chip">
-                  <Phone size={14} className="meta-chip-icon" />
-                  {user.phone}
-                </span>
-                <span className="meta-chip meta-chip--avail">
-                  <Clock size={14} className="meta-chip-icon" />
-                  {user.availability}
-                </span>
+                {user.phone && (
+                  <span className="meta-chip">
+                    <Phone size={14} className="meta-chip-icon" />
+                    {user.phone}
+                  </span>
+                )}
+                {user.availability && (
+                  <span className="meta-chip meta-chip--avail">
+                    <Clock size={14} className="meta-chip-icon" />
+                    {user.availability}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -277,7 +288,7 @@ export const Profile: React.FC = () => {
             <span className="metric-lbl">Recorded Previous Roles</span>
           </div>
           <div className="metric-box">
-            <span className="metric-val text-green">{user.savedCV ? 'Active' : 'Missing'}</span>
+            <span className={`metric-val ${user.savedCV ? 'text-green' : 'text-gold'}`}>{user.savedCV ? 'Active' : 'Missing'}</span>
             <span className="metric-lbl">Saved CV Document</span>
           </div>
         </section>
@@ -307,7 +318,7 @@ export const Profile: React.FC = () => {
         </div>
 
         {/* 3. DASHBOARD TABS NAVIGATION */}
-        <div className="profile-nav-tabs">
+        <div className="profile-nav-tabs mobile-tab-scroller">
           <button
             type="button"
             className={`profile-tab-btn ${activeTab === 'applications' ? 'profile-tab-btn--active' : ''}`}
@@ -385,6 +396,10 @@ export const Profile: React.FC = () => {
                             return <span className="status-badge status-badge--shortlist"><CheckCircle2 size={13} /> Shortlisted</span>;
                           case 'Offer Extended':
                             return <span className="status-badge status-badge--offer"><ShieldCheck size={13} /> Offer Extended</span>;
+                          case 'Placed':
+                            return <span className="status-badge status-badge--offer"><ShieldCheck size={13} /> Placed</span>;
+                          case 'Declined':
+                            return <span className="status-badge status-badge--received"><AlertCircle size={13} /> Not progressed</span>;
                           default:
                             return <span className="status-badge status-badge--received"><CheckCircle2 size={13} /> Application Received</span>;
                         }
@@ -431,10 +446,10 @@ export const Profile: React.FC = () => {
                               </Link>
                               <button
                                 type="button"
-                                onClick={() => {
+                                onClick={async () => {
                                   if (confirm(`Withdraw application for ${app.jobTitle} at ${app.companyName}?`)) {
-                                    withdrawApplication(app.id);
-                                    triggerToast(`Application for ${app.jobTitle} withdrawn.`);
+                                    const res = await withdrawApplication(app.id);
+                                    triggerToast(res.success ? `Application for ${app.jobTitle} withdrawn.` : (res.message || 'Could not withdraw.'));
                                   }
                                 }}
                                 className="app-withdraw-btn"
@@ -479,7 +494,7 @@ export const Profile: React.FC = () => {
                         <span>·</span>
                         <span>Last Uploaded: {user.savedCV?.uploadedDate || 'N/A'}</span>
                         <span>·</span>
-                        <span className="cv-format-badge">PDF / Verified</span>
+                        <span className="cv-format-badge">PDF / DOC / DOCX</span>
                       </div>
                     </div>
                   </div>
@@ -487,8 +502,9 @@ export const Profile: React.FC = () => {
                   <div className="cv-card-actions-row">
                     <button
                       type="button"
-                      onClick={handleMockDownloadCV}
+                      onClick={handleDownloadCV}
                       className="btn-pill-green cv-download-btn"
+                      disabled={!user.savedCV}
                     >
                       <Download size={16} /> Download / Preview Saved CV
                     </button>
@@ -513,37 +529,19 @@ export const Profile: React.FC = () => {
                   </div>
 
                   <div className="compliance-checklist">
-                    <div className="comp-item">
-                      <CheckCircle2 size={18} className="comp-check" />
-                      <div>
-                        <strong>Enhanced DBS Clearance</strong>
-                        <p>{user.dbsStatus}</p>
+                    {[
+                      { label: 'DBS Clearance', ok: user.dbsVerified, detail: user.dbsStatus || 'Not provided' },
+                      { label: 'Right to Work in UK', ok: user.rightToWorkVerified, detail: 'Documents checked by the LICHT compliance team' },
+                      { label: 'NMC PIN (nursing roles)', ok: user.nmcPinVerified, detail: 'Only required for registered nursing roles' }
+                    ].map(item => (
+                      <div key={item.label} className="comp-item">
+                        {item.ok ? <CheckCircle2 size={18} className="comp-check" /> : <Clock size={18} className="comp-check" />}
+                        <div>
+                          <strong>{item.label} — {item.ok ? 'Verified' : 'Pending check'}</strong>
+                          <p>{item.detail}</p>
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="comp-item">
-                      <CheckCircle2 size={18} className="comp-check" />
-                      <div>
-                        <strong>Right to Work in UK</strong>
-                        <p>Verified documentation on file under Home Office guidelines</p>
-                      </div>
-                    </div>
-
-                    <div className="comp-item">
-                      <CheckCircle2 size={18} className="comp-check" />
-                      <div>
-                        <strong>Care & Clinical References</strong>
-                        <p>2 professional employer references verified by LICHT Placement Team</p>
-                      </div>
-                    </div>
-
-                    <div className="comp-item">
-                      <CheckCircle2 size={18} className="comp-check" />
-                      <div>
-                        <strong>Mandatory Care Training</strong>
-                        <p>Moving & Handling, Safeguarding Adults & Infection Control current</p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -572,7 +570,7 @@ export const Profile: React.FC = () => {
               {/* Bio Statement */}
               <div className="profile-bio-box">
                 <h4 className="bio-box-heading">Candidate Summary & Professional Statement</h4>
-                <p className="bio-box-text">{user.bio}</p>
+                <p className="bio-box-text">{user.bio || 'No professional summary added yet.'}</p>
               </div>
 
               {/* Experience Timeline */}
@@ -620,9 +618,9 @@ export const Profile: React.FC = () => {
                               {exp.current && <span className="timeline-current-pill">Current Role</span>}
                               <button
                                 type="button"
-                                onClick={() => {
-                                  deleteExperience(exp.id);
-                                  triggerToast('Experience entry removed.');
+                                onClick={async () => {
+                                  const res = await deleteExperience(exp.id);
+                                  triggerToast(res.success ? 'Experience entry removed.' : (res.message || 'Could not remove entry.'));
                                 }}
                                 className="timeline-del-btn"
                                 title="Delete this role"
@@ -690,9 +688,9 @@ export const Profile: React.FC = () => {
                           </div>
                           <button
                             type="button"
-                            onClick={() => {
-                              deleteEducation(edu.id);
-                              triggerToast('Qualification entry removed.');
+                            onClick={async () => {
+                              const res = await deleteEducation(edu.id);
+                              triggerToast(res.success ? 'Qualification entry removed.' : (res.message || 'Could not remove entry.'));
                             }}
                             className="timeline-del-btn"
                             title="Delete qualification"
@@ -927,7 +925,7 @@ export const Profile: React.FC = () => {
                 <select
                   value={newEduQual}
                   onChange={(e) => setNewEduQual(e.target.value)}
-                  className="auth-select"
+                  className="auth-input"
                 >
                   <option value="NVQ / Diploma (Level 2 or 3 in Health & Social Care)">NVQ / Diploma (Level 2 or 3 in Health & Social Care)</option>
                   <option value="Bachelor's Degree (BSc Nursing / Healthcare)">Bachelor's Degree (BSc Nursing / Healthcare / Science)</option>

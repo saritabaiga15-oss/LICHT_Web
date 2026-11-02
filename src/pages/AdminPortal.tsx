@@ -31,14 +31,29 @@ import {
   Check,
   ArrowRight
 } from 'lucide-react';
-import { useEmployer } from '../context/EmployerContext';
-import { EmployerAccount } from '../types/employer';
-import { adminLogin, fetchAdminCandidates, updateCandidateCompliance, approveAdminEmployer, rejectAdminEmployer } from '../services/api';
+import { mapEmployer, mapDocument } from '../context/EmployerContext';
+import { EmployerAccount, EmployerJobListing } from '../types/employer';
+import {
+  ApiError,
+  getToken,
+  setToken,
+  adminLogin,
+  fetchAdminCandidates,
+  fetchAdminEmployers,
+  fetchAdminEmployerDocuments,
+  downloadAdminEmployerDocument,
+  fetchAdminJobs,
+  fetchAdminApplications,
+  updateAdminApplicationStatus,
+  updateCandidateCompliance,
+  approveAdminEmployer,
+  rejectAdminEmployer,
+  deleteAdminEmployer,
+  downloadAdminCandidateCv
+} from '../services/api';
 import './AdminPortal.css';
 
-// Admin credentials
-const ADMIN_EMAIL = 'admin@lichtrecruitment.co.uk';
-const ADMIN_PASSWORD = 'LichtAdmin2026!';
+// Admin portal types
 
 type AdminPortalRole = 'employers' | 'jobseekers';
 type EmployerView = 'pending' | 'verified' | 'rejected' | 'jobs' | 'all';
@@ -53,9 +68,8 @@ interface AdminCandidate {
   phone: string;
   location: string;
   postcode: string;
-  sector: 'Care homes' | 'Healthcare' | 'Supported living' | 'Corporate';
-  experienceLevel: 'Student' | 'Fresher / Entry level' | '1+ years of experience' | '3+ years of experience' | '5+ years of experience' | '10+ years of experience';
-  experienceYears: number;
+  sector: string;
+  experienceLevel: string;
   education: {
     qualification: string;
     fieldOfStudy: string;
@@ -69,6 +83,7 @@ interface AdminCandidate {
   rightToWorkVerified: boolean;
   nmcPinVerified?: boolean;
   availability: string;
+  hasCv: boolean;
   cvFileName: string;
   cvFileSize: string;
   registrationDate: string;
@@ -87,392 +102,68 @@ interface AdminApplication {
   appliedDate: string;
   status: 'Application Received' | 'Under Review' | 'Shortlisted' | 'Interview Scheduled' | 'Offer Extended' | 'Placed' | 'Declined';
   cvFileName: string;
-  matchScore: number;
-  adminNotes?: string;
+  candidateNote?: string;
 }
 
-const INITIAL_ADMIN_CANDIDATES: AdminCandidate[] = [
-  {
-    id: 'cand-001',
-    name: 'Eleanor Vance',
-    avatarInitials: 'EV',
-    headline: 'Senior Healthcare Assistant • Dementia Care Lead',
-    email: 'eleanor.vance@licht-talent.co.uk',
-    phone: '+44 7700 900482',
-    location: 'Kensington & Chelsea, London',
-    postcode: 'SW7 2AZ',
-    sector: 'Care homes',
-    experienceLevel: '5+ years of experience',
-    experienceYears: 8,
-    education: [
-      {
-        qualification: 'NVQ Level 3 Diploma in Health & Social Care',
-        fieldOfStudy: 'Adult Care & Clinical Governance',
-        institution: 'City & Guilds London',
-        graduationYear: '2019'
-      },
-      {
-        qualification: 'BTEC National Extended Diploma',
-        fieldOfStudy: 'Applied Science & Healthcare Studies',
-        institution: 'West London College',
-        graduationYear: '2017'
-      }
-    ],
-    skills: ['Dementia Care', 'Medication Administration', 'Care Planning', 'End of Life', 'Moving & Handling', 'Safeguarding Level 3'],
-    certifications: ['Care Certificate (Skills for Care)', 'NVQ Level 3 Health & Social Care', 'First Aid at Work & CPR'],
-    dbsStatus: 'Enhanced DBS on Update Service',
-    dbsVerified: true,
-    rightToWorkVerified: true,
-    availability: 'Immediately available',
-    cvFileName: 'Eleanor_Vance_Senior_Healthcare_CV_2026.pdf',
-    cvFileSize: '428 KB',
-    registrationDate: '12 Oct 2026'
-  },
-  {
-    id: 'cand-002',
-    name: 'Sister Fiona MacLeod',
-    avatarInitials: 'FM',
-    headline: 'Registered General Nurse (RGN) • Band 6 Clinical Lead',
-    email: 'fiona.macleod@nhs-alumni.co.uk',
-    phone: '+44 7700 900115',
-    location: 'Central London',
-    postcode: 'W1G 9QN',
-    sector: 'Healthcare',
-    experienceLevel: '10+ years of experience',
-    experienceYears: 12,
-    education: [
-      {
-        qualification: 'BSc (Hons) Adult Nursing (First Class)',
-        fieldOfStudy: 'Clinical Nursing Practice',
-        institution: "King's College London",
-        graduationYear: '2014'
-      },
-      {
-        qualification: 'Postgraduate Certificate in Tissue Viability',
-        fieldOfStudy: 'Wound Care & Complex Dressings',
-        institution: 'University of Manchester',
-        graduationYear: '2017'
-      }
-    ],
-    skills: ['NMC Active PIN', 'IV Medication & Cannulation', 'Wound Care', 'Syringe Drivers', 'Clinical Governance', 'Mentorship'],
-    certifications: ['NMC PIN #09E0142E (Active Verified)', 'Immediate Life Support (ILS)', 'Safe Handling of Medicines Level 4'],
-    dbsStatus: 'Enhanced DBS on Update Service',
-    dbsVerified: true,
-    rightToWorkVerified: true,
-    nmcPinVerified: true,
-    availability: 'Available in 1 week',
-    cvFileName: 'Sister_Fiona_MacLeod_RGN_Lead_CV.pdf',
-    cvFileSize: '512 KB',
-    registrationDate: '10 Oct 2026'
-  },
-  {
-    id: 'cand-003',
-    name: 'David Adebayo',
-    avatarInitials: 'DA',
-    headline: 'Care Team Leader • Moving & Handling Trainer',
-    email: 'd.adebayo@outlook.com',
-    phone: '+44 7700 900311',
-    location: 'Wembley, London',
-    postcode: 'HA9 7BU',
-    sector: 'Care homes',
-    experienceLevel: '5+ years of experience',
-    experienceYears: 6,
-    education: [
-      {
-        qualification: 'NVQ Level 3 in Adult Health & Social Care',
-        fieldOfStudy: 'Residential Care Management',
-        institution: 'Stanmore College London',
-        graduationYear: '2020'
-      }
-    ],
-    skills: ['Night Shift Leadership', 'Moving & Handling Trainer', 'Safeguarding Adults', 'Medication Rounds', 'CQC Audit Prep'],
-    certifications: ['Enhanced DBS Cleared', 'Train the Trainer: Moving & Positioning', 'Basic Life Support & AED'],
-    dbsStatus: 'Enhanced DBS on Update Service',
-    dbsVerified: true,
-    rightToWorkVerified: true,
-    availability: 'Immediately available',
-    cvFileName: 'David_Adebayo_Care_Leader_CV.pdf',
-    cvFileSize: '390 KB',
-    registrationDate: '15 Oct 2026'
-  },
-  {
-    id: 'cand-004',
-    name: 'Marcus Chen',
-    avatarInitials: 'MC',
-    headline: 'Autism & Learning Disability Support Specialist',
-    email: 'marcus.chen@care-pathways.org.uk',
-    phone: '+44 7700 900673',
-    location: 'Canary Wharf, London',
-    postcode: 'E14 9PJ',
-    sector: 'Supported living',
-    experienceLevel: '5+ years of experience',
-    experienceYears: 5,
-    education: [
-      {
-        qualification: 'BTEC National Diploma in Health & Social Care',
-        fieldOfStudy: 'Specialist Learning Disability Support',
-        institution: 'Tower Hamlets College',
-        graduationYear: '2021'
-      }
-    ],
-    skills: ['PBS (Positive Behaviour Support)', 'PMVA Trained', 'Supported Living', 'Makaton Sign Language', 'Community Outings'],
-    certifications: ['Care Certificate', 'PMVA Certified (BILD ACT compliant)', 'Safeguarding Adults Level 3'],
-    dbsStatus: 'Enhanced DBS on Update Service',
-    dbsVerified: true,
-    rightToWorkVerified: true,
-    availability: 'Immediately available (Nights & Weekends)',
-    cvFileName: 'Marcus_Chen_Specialist_Support_Worker.pdf',
-    cvFileSize: '410 KB',
-    registrationDate: '16 Oct 2026'
-  },
-  {
-    id: 'cand-005',
-    name: 'Amara Okafor',
-    avatarInitials: 'AO',
-    headline: 'Student Nurse (2nd Year) • Bank Healthcare Assistant',
-    email: 'amara.okafor@uwl.ac.uk',
-    phone: '+44 7700 900889',
-    location: 'Ealing, London',
-    postcode: 'W5 5RF',
-    sector: 'Healthcare',
-    experienceLevel: 'Student',
-    experienceYears: 1,
-    education: [
-      {
-        qualification: 'BSc (Hons) Adult Nursing (In Progress - Year 2)',
-        fieldOfStudy: 'Adult Nursing & Clinical Skills',
-        institution: 'University of West London',
-        graduationYear: 'Expected 2028'
-      }
-    ],
-    skills: ['Patient Vital Signs', 'Infection Control', 'Personal Care Support', 'Nutrition & Hydration Monitoring', 'Empathy & Patient Advocacy'],
-    certifications: ['University Clinical Passport', 'Basic Life Support (BLS)', 'Moving & Handling Level 2'],
-    dbsStatus: 'Enhanced DBS (University Verified)',
-    dbsVerified: true,
-    rightToWorkVerified: true,
-    availability: 'Flexible Bank Shifts (Weekends & Evenings)',
-    cvFileName: 'Amara_Okafor_Student_Nurse_CV.pdf',
-    cvFileSize: '345 KB',
-    registrationDate: '18 Oct 2026'
-  },
-  {
-    id: 'cand-006',
-    name: 'Tariq Al-Mansoor',
-    avatarInitials: 'TA',
-    headline: 'Junior Care Assistant • Passionate New Entrant to Adult Social Care',
-    email: 'tariq.mansoor@gmail.com',
-    phone: '+44 7700 900224',
-    location: 'Croydon, Greater London',
-    postcode: 'CR0 1XZ',
-    sector: 'Care homes',
-    experienceLevel: 'Fresher / Entry level',
-    experienceYears: 0,
-    education: [
-      {
-        qualification: 'Level 2 Certificate in Preparing to Work in Adult Social Care',
-        fieldOfStudy: 'Social Care Principles & Safeguarding',
-        institution: 'Croydon College',
-        graduationYear: '2026'
-      }
-    ],
-    skills: ['Personal Hygiene Support', 'Compassionate Care', 'Active Listening', 'Meal Preparation', 'Health & Safety Principles'],
-    certifications: ['Level 2 Adult Social Care Certificate', 'First Aid Essentials', 'Food Hygiene Level 2'],
-    dbsStatus: 'Standard DBS (Pending Update Service Registration)',
-    dbsVerified: false,
-    rightToWorkVerified: true,
-    availability: 'Immediately available (Full-time Rotas)',
-    cvFileName: 'Tariq_AlMansoor_Entry_Care_CV.pdf',
-    cvFileSize: '310 KB',
-    registrationDate: '20 Oct 2026'
-  },
-  {
-    id: 'cand-007',
-    name: 'Hannah Sterling',
-    avatarInitials: 'HS',
-    headline: 'Healthcare Assistant • Elderly & Palliative Care Specialist',
-    email: 'hannah.sterling@care-professionals.co.uk',
-    phone: '+44 7700 900541',
-    location: 'Richmond, Surrey',
-    postcode: 'TW9 1DN',
-    sector: 'Care homes',
-    experienceLevel: '3+ years of experience',
-    experienceYears: 3,
-    education: [
-      {
-        qualification: 'NVQ Level 2 in Health & Social Care',
-        fieldOfStudy: 'Elderly Residential Care',
-        institution: 'Richmond upon Thames College',
-        graduationYear: '2023'
-      }
-    ],
-    skills: ['Palliative Care', 'Dementia Support', 'Medication Prompting', 'Hoist & Mobility Assistance', 'Family Liaison'],
-    certifications: ['Care Certificate', 'End of Life Care Level 2', 'Safeguarding Level 2'],
-    dbsStatus: 'Enhanced DBS on Update Service',
-    dbsVerified: true,
-    rightToWorkVerified: true,
-    availability: '2 weeks notice',
-    cvFileName: 'Hannah_Sterling_HCA_Richmond.pdf',
-    cvFileSize: '380 KB',
-    registrationDate: '17 Oct 2026'
-  },
-  {
-    id: 'cand-008',
-    name: 'Dr. Sarah Jenkins-Taylor',
-    avatarInitials: 'SJ',
-    headline: 'Care Home Registered Manager • CQC Outstanding Record',
-    email: 'sarah.jenkins.taylor@care-management.co.uk',
-    phone: '+44 7700 900778',
-    location: 'Westminster, London',
-    postcode: 'SW1P 3PA',
-    sector: 'Care homes',
-    experienceLevel: '10+ years of experience',
-    experienceYears: 14,
-    education: [
-      {
-        qualification: 'MSc in Healthcare Leadership & Management',
-        fieldOfStudy: 'Strategic Healthcare Governance',
-        institution: 'Imperial College London',
-        graduationYear: '2016'
-      },
-      {
-        qualification: 'Level 5 Diploma in Leadership for Health & Social Care',
-        fieldOfStudy: 'Care Facility Operations',
-        institution: 'Chartered Management Institute',
-        graduationYear: '2018'
-      }
-    ],
-    skills: ['CQC Inspection Readiness (Outstanding Track Record)', 'Clinical Governance', 'Staff Rota Management', 'Budgeting & P&L', 'Safeguarding Lead'],
-    certifications: ['Level 5 Leadership for Health & Social Care', 'Enhanced DBS Registered Manager Clearance'],
-    dbsStatus: 'Enhanced DBS on Update Service',
-    dbsVerified: true,
-    rightToWorkVerified: true,
-    availability: '1 month notice',
-    cvFileName: 'Dr_Sarah_Jenkins_Taylor_Executive_CV.pdf',
-    cvFileSize: '620 KB',
-    registrationDate: '08 Oct 2026'
-  }
-];
+const str = (v: unknown) => (v === null || v === undefined ? '' : String(v));
+const fmtDate = (iso: string) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? iso : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
 
-const INITIAL_ADMIN_APPLICATIONS: AdminApplication[] = [
-  {
-    id: 'app-adm-01',
-    candidateId: 'cand-001',
-    candidateName: 'Eleanor Vance',
-    candidateEmail: 'eleanor.vance@licht-talent.co.uk',
-    jobId: 'emp-job-01',
-    jobTitle: 'Senior Care Assistant (Dementia Wing)',
-    employerName: 'St. Jude Care Pavilion (London)',
-    sector: 'Care homes',
-    location: 'Kensington & Chelsea, London',
-    appliedDate: '14 Oct 2026',
-    status: 'Interview Scheduled',
-    cvFileName: 'Eleanor_Vance_Senior_Healthcare_CV_2026.pdf',
-    matchScore: 98,
-    adminNotes: 'Screening call completed. Excellent knowledge of MAR chart medication rounds. Interview booked with Registered Manager on Tuesday 11:00 AM.'
-  },
-  {
-    id: 'app-adm-02',
-    candidateId: 'cand-003',
-    candidateName: 'David Adebayo',
-    candidateEmail: 'd.adebayo@outlook.com',
-    jobId: 'emp-job-01',
-    jobTitle: 'Senior Care Assistant (Dementia Wing)',
-    employerName: 'St. Jude Care Pavilion (London)',
-    sector: 'Care homes',
-    location: 'Kensington & Chelsea, London',
-    appliedDate: '15 Oct 2026',
-    status: 'Under Review',
-    cvFileName: 'David_Adebayo_Care_Leader_CV.pdf',
-    matchScore: 92,
-    adminNotes: 'Candidate has Moving & Handling trainer certification. Facility reviewing profile.'
-  },
-  {
-    id: 'app-adm-03',
-    candidateId: 'cand-002',
-    candidateName: 'Sister Fiona MacLeod',
-    candidateEmail: 'fiona.macleod@nhs-alumni.co.uk',
-    jobId: 'emp-job-02',
-    jobTitle: 'Registered General Nurse (RGN - Night Cover)',
-    employerName: 'St. Jude Care Pavilion (London)',
-    sector: 'Healthcare',
-    location: 'Kensington & Chelsea, London',
-    appliedDate: '13 Oct 2026',
-    status: 'Interview Scheduled',
-    cvFileName: 'Sister_Fiona_MacLeod_RGN_Lead_CV.pdf',
-    matchScore: 96,
-    adminNotes: 'Active NMC PIN checked on online register. Clean clinical record. Ready for final round with Clinical Director.'
-  },
-  {
-    id: 'app-adm-04',
-    candidateId: 'cand-005',
-    candidateName: 'Amara Okafor',
-    candidateEmail: 'amara.okafor@uwl.ac.uk',
-    jobId: 'emp-job-03',
-    jobTitle: 'Healthcare Support Worker (Weekend Cover)',
-    employerName: 'St. Jude Care Pavilion (London)',
-    sector: 'Healthcare',
-    location: 'Chelsea, London',
-    appliedDate: '18 Oct 2026',
-    status: 'Application Received',
-    cvFileName: 'Amara_Okafor_Student_Nurse_CV.pdf',
-    matchScore: 84,
-    adminNotes: 'Second-year student nurse looking for bank weekend shifts. Meets clinical basic standards.'
-  },
-  {
-    id: 'app-adm-05',
-    candidateId: 'cand-004',
-    candidateName: 'Marcus Chen',
-    candidateEmail: 'marcus.chen@care-pathways.org.uk',
-    jobId: 'emp-job-04',
-    jobTitle: 'Autism & Learning Disability Support Specialist',
-    employerName: 'Camden Community Supported Living',
-    sector: 'Supported living',
-    location: 'Camden, London',
-    appliedDate: '16 Oct 2026',
-    status: 'Shortlisted',
-    cvFileName: 'Marcus_Chen_Specialist_Support_Worker.pdf',
-    matchScore: 95,
-    adminNotes: 'PMVA certified. Strong background in non-verbal communication and positive behaviour support.'
-  },
-  {
-    id: 'app-adm-06',
-    candidateId: 'cand-007',
-    candidateName: 'Hannah Sterling',
-    candidateEmail: 'hannah.sterling@care-professionals.co.uk',
-    jobId: 'emp-job-05',
-    jobTitle: 'Residential Care Assistant',
-    employerName: 'Meadowcroft Residential & Nursing Home',
-    sector: 'Care homes',
-    location: 'Richmond upon Thames',
-    appliedDate: '17 Oct 2026',
-    status: 'Offer Extended',
-    cvFileName: 'Hannah_Sterling_HCA_Richmond.pdf',
-    matchScore: 91,
-    adminNotes: 'Candidate completed face-to-face interview with distinction. Formal offer letter generated at £15.20/hr.'
-  },
-  {
-    id: 'app-adm-07',
-    candidateId: 'cand-006',
-    candidateName: 'Tariq Al-Mansoor',
-    candidateEmail: 'tariq.mansoor@gmail.com',
-    jobId: 'emp-job-05',
-    jobTitle: 'Residential Care Assistant',
-    employerName: 'Meadowcroft Residential & Nursing Home',
-    sector: 'Care homes',
-    location: 'Richmond upon Thames',
-    appliedDate: '20 Oct 2026',
-    status: 'Under Review',
-    cvFileName: 'Tariq_AlMansoor_Entry_Care_CV.pdf',
-    matchScore: 78,
-    adminNotes: 'Entry level applicant. Excellent motivation and completed Level 2 preparation course.'
-  }
-];
+const mapAdminCandidate = (c: any): AdminCandidate => {
+  const name = str(c.fullName) || 'Candidate';
+  return {
+    id: str(c.id),
+    name,
+    avatarInitials: name.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase(),
+    headline: str(c.headline),
+    email: str(c.email),
+    phone: str(c.phone),
+    location: str(c.location),
+    postcode: str(c.postcode),
+    sector: str(c.targetSector),
+    experienceLevel: str(c.experienceLevel),
+    education: (Array.isArray(c.education) ? c.education : []).map((e: any) => ({
+      qualification: str(e.qualification),
+      fieldOfStudy: str(e.fieldOfStudy),
+      institution: str(e.institution),
+      graduationYear: str(e.graduationYear)
+    })),
+    skills: Array.isArray(c.skills) ? c.skills : [],
+    certifications: Array.isArray(c.certifications) ? c.certifications : [],
+    dbsStatus: str(c.dbsStatus) || 'Not provided',
+    dbsVerified: Boolean(c.dbsVerified),
+    rightToWorkVerified: Boolean(c.rightToWorkVerified),
+    nmcPinVerified: Boolean(c.nmcPinVerified),
+    availability: str(c.availability),
+    hasCv: Boolean(c.savedCvFileName),
+    cvFileName: str(c.savedCvFileName) || 'No CV uploaded',
+    cvFileSize: str(c.savedCvFileSize),
+    registrationDate: fmtDate(str(c.createdAt))
+  };
+};
+
+const mapAdminApplication = (a: any): AdminApplication => ({
+  id: str(a.id),
+  candidateId: str(a.candidateId),
+  candidateName: str(a.candidateName),
+  candidateEmail: str(a.candidateEmail),
+  jobId: str(a.jobId),
+  jobTitle: str(a.jobTitle),
+  employerName: str(a.companyName),
+  sector: str(a.sector),
+  location: str(a.location),
+  appliedDate: fmtDate(str(a.appliedDate)),
+  status: (str(a.status) || 'Application Received') as AdminApplication['status'],
+  cvFileName: str(a.cvUsed),
+  candidateNote: str(a.notes) || undefined
+});
 
 export const AdminPortal: React.FC = () => {
-  const { allEmployers, approveEmployer, rejectEmployer, deleteEmployer, jobListings } = useEmployer();
-
-  // Admin auth state
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  // Admin auth state (token is kept in sessionStorage, so a refresh keeps the session)
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => Boolean(getToken('admin')));
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [showAdminPass, setShowAdminPass] = useState(false);
@@ -487,76 +178,65 @@ export const AdminPortal: React.FC = () => {
   // Sub navigation for Job Seekers
   const [jobSeekerView, setJobSeekerView] = useState<JobSeekerView>('candidates');
 
-  // Interactive Candidate and Application states
-  const [candidates, setCandidates] = useState<AdminCandidate[]>(() => {
-    try {
-      const stored = localStorage.getItem('licht_admin_candidates');
-      return stored ? JSON.parse(stored) : INITIAL_ADMIN_CANDIDATES;
-    } catch {
-      return INITIAL_ADMIN_CANDIDATES;
+  // Live data from the backend
+  const [allEmployers, setAllEmployers] = useState<EmployerAccount[]>([]);
+  const [candidates, setCandidates] = useState<AdminCandidate[]>([]);
+  const [applications, setApplications] = useState<AdminApplication[]>([]);
+  const [jobListings, setJobListings] = useState<EmployerJobListing[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const handleAdminLogout = () => {
+    setToken('admin', null);
+    setIsAdminLoggedIn(false);
+  };
+
+  const handleApiError = (err: unknown, fallback: string) => {
+    if (err instanceof ApiError && err.status === 401) {
+      handleAdminLogout();
+      setLoginError('Your admin session has expired. Please sign in again.');
+      return;
     }
-  });
+    setLoadError(err instanceof Error && err.message ? err.message : fallback);
+  };
 
-  const [applications, setApplications] = useState<AdminApplication[]>(() => {
+  const loadAdminData = async () => {
+    setLoadError(null);
     try {
-      const stored = localStorage.getItem('licht_admin_applications');
-      return stored ? JSON.parse(stored) : INITIAL_ADMIN_APPLICATIONS;
-    } catch {
-      return INITIAL_ADMIN_APPLICATIONS;
+      const [emps, cands, apps, jobs] = await Promise.all([
+        fetchAdminEmployers(),
+        fetchAdminCandidates(),
+        fetchAdminApplications(),
+        fetchAdminJobs()
+      ]);
+      const empList: any[] = Array.isArray(emps) ? emps : [];
+      const docs = await Promise.all(empList.map(e => fetchAdminEmployerDocuments(e.id).catch(() => [])));
+      setAllEmployers(empList.map((e, i) =>
+        mapEmployer(e, (Array.isArray(docs[i]) ? docs[i] : []).map((d: any) => mapDocument(d, Boolean(e.documentsVerified))))
+      ).sort((a, b) => Number(b.id) - Number(a.id)));
+      setCandidates((Array.isArray(cands) ? cands : []).map(mapAdminCandidate));
+      const appList = (Array.isArray(apps) ? apps : []).map(mapAdminApplication);
+      setApplications(appList);
+      setJobListings((Array.isArray(jobs) ? jobs : []).map((j: any) => ({
+        id: str(j.id),
+        title: str(j.title),
+        sector: str(j.sector),
+        location: str(j.location),
+        contractType: str(j.contract) || str(j.type),
+        payRate: str(j.pay),
+        postedDate: fmtDate(str(j.postedDate)),
+        status: (str(j.status) || 'Active') as EmployerJobListing['status'],
+        urgentCover: Boolean(j.urgentCover),
+        // Only the count is shown in the admin requisitions view
+        applicants: appList.filter(a => a.jobId === str(j.id)) as any
+      })));
+    } catch (err) {
+      handleApiError(err, 'Could not load admin data.');
     }
-  });
+  };
 
   useEffect(() => {
-    localStorage.setItem('licht_admin_candidates', JSON.stringify(candidates));
-  }, [candidates]);
-
-  useEffect(() => {
-    localStorage.setItem('licht_admin_applications', JSON.stringify(applications));
-  }, [applications]);
-
-  // Fetch live candidates from Neon database when admin portal is opened
-  useEffect(() => {
-    fetchAdminCandidates()
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          const liveMapped: AdminCandidate[] = data.map((c: any) => ({
-            id: String(c.id),
-            name: c.fullName || 'Candidate',
-            avatarInitials: (c.fullName || 'C')
-              .split(' ')
-              .map((n: string) => n[0])
-              .join('')
-              .substring(0, 2)
-              .toUpperCase(),
-            headline: c.headline || 'Healthcare Professional',
-            email: c.email,
-            phone: c.phone || 'N/A',
-            location: c.location || 'London, UK',
-            postcode: c.postcode || '',
-            sector: c.targetSector || 'Care homes',
-            experienceLevel: c.experienceLevel || '1+ years of experience',
-            experienceYears: 3,
-            education: (c.education || []).map((e: any) => ({
-              qualification: e.qualification || '',
-              fieldOfStudy: e.fieldOfStudy || '',
-              institution: e.institution || '',
-              graduationYear: e.graduationYear || ''
-            })),
-            skills: c.skills || [],
-            certifications: c.certifications || [],
-            dbsStatus: c.dbsStatus || 'Enhanced DBS on Update Service',
-            dbsVerified: Boolean(c.dbsVerified),
-            rightToWorkVerified: Boolean(c.rightToWorkVerified),
-            nmcPinVerified: Boolean(c.nmcPinVerified),
-            availability: c.availability || 'Immediately available',
-            cvFileName: c.savedCvFileName || 'Candidate_Profile_CV.pdf',
-            cvFileSize: c.savedCvFileSize || '380 KB',
-            registrationDate: c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Today'
-          }));
-          setCandidates(liveMapped);
-        }
-      })
-      .catch(() => {});
+    if (isAdminLoggedIn) loadAdminData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdminLoggedIn]);
 
   // Employer state
@@ -585,75 +265,94 @@ export const AdminPortal: React.FC = () => {
     setIsLoggingIn(true);
 
     try {
-      const res = await adminLogin({ email: adminEmail, password: adminPassword });
-      if (res && res.success) {
-        setIsAdminLoggedIn(true);
-      } else {
-        setLoginError(res?.message || 'Invalid admin credentials.');
-      }
+      const data = await adminLogin({ email: adminEmail.trim(), password: adminPassword });
+      setToken('admin', data.token);
+      setAdminPassword('');
+      setIsAdminLoggedIn(true);
     } catch (err: any) {
-      // Fallback
-      const cleanEmail = adminEmail.trim().toLowerCase();
-      if (
-        (cleanEmail === ADMIN_EMAIL.toLowerCase() || cleanEmail === 'admin@lichtrecruitment.co.uk') &&
-        (adminPassword === ADMIN_PASSWORD || adminPassword === 'admin2026' || adminPassword === 'LichtAdmin2026!')
-      ) {
-        setIsAdminLoggedIn(true);
-      } else {
-        setLoginError(err?.message || 'Invalid admin credentials. Please enter authorized credentials.');
-      }
+      setLoginError(err?.message || 'Authentication failed. Please verify administrator credentials.');
     } finally {
       setIsLoggingIn(false);
     }
   };
 
-  // Employer actions
-  const handleApprove = (emp: EmployerAccount) => {
-    approveEmployer(emp.id);
-    approveAdminEmployer(emp.id).catch(() => {});
-    setActionFeedback({ id: emp.id, type: 'approved' });
-    setExpandedEmployerId(null);
-    setTimeout(() => setActionFeedback(null), 3500);
+  const replaceEmployer = (saved: any, prev: EmployerAccount) =>
+    setAllEmployers(list => list.map(e => (e.id === prev.id
+      ? mapEmployer(saved, (prev.uploadedDocuments || []).map(d => ({ ...d, verified: Boolean(saved.documentsVerified) })))
+      : e)));
+
+  // Employer actions (the list only changes once the backend confirms)
+  const handleApprove = async (emp: EmployerAccount) => {
+    try {
+      replaceEmployer(await approveAdminEmployer(emp.id), emp);
+      setActionFeedback({ id: emp.id, type: 'approved' });
+      setRejectingId(null);
+      setExpandedEmployerId(null);
+      setTimeout(() => setActionFeedback(null), 3500);
+    } catch (err) {
+      handleApiError(err, 'Could not approve this employer.');
+    }
   };
 
-  const handleReject = (emp: EmployerAccount) => {
-    rejectEmployer(emp.id, rejectReason || undefined);
-    rejectAdminEmployer(emp.id, rejectReason || undefined).catch(() => {});
-    setActionFeedback({ id: emp.id, type: 'rejected' });
-    setRejectingId(null);
-    setRejectReason('');
-    setExpandedEmployerId(null);
-    setTimeout(() => setActionFeedback(null), 3500);
+  const handleReject = async (emp: EmployerAccount) => {
+    try {
+      replaceEmployer(await rejectAdminEmployer(emp.id, rejectReason || undefined), emp);
+      setActionFeedback({ id: emp.id, type: 'rejected' });
+      setRejectingId(null);
+      setRejectReason('');
+      setExpandedEmployerId(null);
+      setTimeout(() => setActionFeedback(null), 3500);
+    } catch (err) {
+      handleApiError(err, 'Could not decline this employer.');
+    }
   };
 
-  // Candidate verification actions
+  const handleDeleteEmployer = async (emp: EmployerAccount) => {
+    try {
+      await deleteAdminEmployer(emp.id);
+      setAllEmployers(list => list.filter(e => e.id !== emp.id));
+    } catch (err) {
+      handleApiError(err, 'Could not delete this employer.');
+    }
+  };
+
+  const handleDownloadDocument = (emp: EmployerAccount, docId: string, name: string) =>
+    downloadAdminEmployerDocument(emp.id, docId, name).catch(err => handleApiError(err, 'Could not download the document.'));
+
+  const handleDownloadCandidateCv = (cand: AdminCandidate) =>
+    downloadAdminCandidateCv(cand.id, cand.cvFileName).catch(err => handleApiError(err, 'Could not download the CV.'));
+
+  // Candidate verification actions: compute the new value first, then persist it
+  const setCompliance = async (cand: AdminCandidate, field: 'dbsVerified' | 'rightToWorkVerified' | 'nmcPinVerified') => {
+    const next = !cand[field];
+    try {
+      const saved = await updateCandidateCompliance(cand.id, { [field]: next });
+      const mapped = mapAdminCandidate(saved);
+      setCandidates(prev => prev.map(c => (c.id === cand.id ? mapped : c)));
+      setSelectedCandidateForModal(prev => (prev && prev.id === cand.id ? mapped : prev));
+    } catch (err) {
+      handleApiError(err, 'Could not update compliance status.');
+    }
+  };
+
   const toggleDBSVerify = (candId: string) => {
-    let newStatus = false;
-    setCandidates(prev => prev.map(c => {
-      if (c.id !== candId) return c;
-      newStatus = !c.dbsVerified;
-      return { ...c, dbsVerified: newStatus };
-    }));
-    updateCandidateCompliance(candId, { dbsVerified: newStatus }).catch(() => {});
+    const cand = candidates.find(c => c.id === candId);
+    if (cand) setCompliance(cand, 'dbsVerified');
   };
 
   const toggleRightToWorkVerify = (candId: string) => {
-    let newStatus = false;
-    setCandidates(prev => prev.map(c => {
-      if (c.id !== candId) return c;
-      newStatus = !c.rightToWorkVerified;
-      return { ...c, rightToWorkVerified: newStatus };
-    }));
-    updateCandidateCompliance(candId, { rightToWorkVerified: newStatus }).catch(() => {});
+    const cand = candidates.find(c => c.id === candId);
+    if (cand) setCompliance(cand, 'rightToWorkVerified');
   };
 
-
   // Application status update
-  const handleApplicationStatusChange = (appId: string, newStatus: AdminApplication['status']) => {
-    setApplications(prev => prev.map(a => {
-      if (a.id !== appId) return a;
-      return { ...a, status: newStatus };
-    }));
+  const handleApplicationStatusChange = async (appId: string, newStatus: AdminApplication['status']) => {
+    try {
+      await updateAdminApplicationStatus(appId, newStatus);
+      setApplications(prev => prev.map(a => (a.id === appId ? { ...a, status: newStatus } : a)));
+    } catch (err) {
+      handleApiError(err, 'Could not update the application status.');
+    }
   };
 
   // Filtered Employers
@@ -664,7 +363,8 @@ export const AdminPortal: React.FC = () => {
       emp.organisationName.toLowerCase().includes(q) ||
       emp.contactName.toLowerCase().includes(q) ||
       emp.email.toLowerCase().includes(q) ||
-      emp.facilityType.toLowerCase().includes(q);
+      emp.facilityType.toLowerCase().includes(q) ||
+      emp.location.toLowerCase().includes(q);
 
     if (!matchSearch) return false;
 
@@ -724,11 +424,16 @@ export const AdminPortal: React.FC = () => {
     return true;
   });
 
+  const filteredJobs = jobListings.filter(job => {
+    const q = employerSearch.toLowerCase();
+    return !q || job.title.toLowerCase().includes(q) || job.sector.toLowerCase().includes(q) || job.location.toLowerCase().includes(q);
+  });
+
   // Counts
   const pendingEmployerCount = allEmployers.filter(e => e.verificationStatus === 'Pending').length;
   const verifiedEmployerCount = allEmployers.filter(e => e.verificationStatus === 'Verified').length;
   const totalEmployerDocuments = allEmployers.reduce((acc, e) => acc + (e.uploadedDocuments?.length || 0), 0);
-  
+
   const totalCandidatesCount = candidates.length;
   const totalVerifiedCandidates = candidates.filter(c => c.dbsVerified && c.rightToWorkVerified).length;
   const activeApplicationsCount = applications.filter(a => a.status !== 'Declined' && a.status !== 'Placed').length;
@@ -765,7 +470,7 @@ export const AdminPortal: React.FC = () => {
                   id="admin-email"
                   type="email"
                   className="admin-input"
-                  placeholder="admin@lichtrecruitment.co.uk"
+                  placeholder="admin@lichtrecruitmentservices.com"
                   value={adminEmail}
                   onChange={e => setAdminEmail(e.target.value)}
                   required
@@ -807,12 +512,6 @@ export const AdminPortal: React.FC = () => {
               {isLoggingIn ? 'Verifying Credentials...' : 'Authenticate & Enter Admin Portal'}
             </button>
           </form>
-
-          <div className="admin-login-hint">
-            <p>Demo Admin Credentials:</p>
-            <code>Email: {ADMIN_EMAIL}</code>
-            <code>Password: admin2026</code>
-          </div>
 
           <div className="admin-back-link">
             <Link to="/"><Home size={14} /> Return to Public Portal</Link>
@@ -868,7 +567,7 @@ export const AdminPortal: React.FC = () => {
         </div>
 
         {/* Sub-navigation depending on activeRole */}
-        <nav className="admin-nav">
+        <nav className="admin-nav mobile-tab-scroller">
           {activeRole === 'employers' ? (
             <>
               <div className="admin-nav-group-title">Employer Desk</div>
@@ -955,7 +654,7 @@ export const AdminPortal: React.FC = () => {
           </div>
           <button
             className="admin-logout-btn"
-            onClick={() => setIsAdminLoggedIn(false)}
+            onClick={handleAdminLogout}
           >
             <LogOut size={15} />
             <span>Sign Out</span>
@@ -996,7 +695,7 @@ export const AdminPortal: React.FC = () => {
               )}
             </h1>
             <p className="admin-page-sub">
-              {activeRole === 'employers' 
+              {activeRole === 'employers'
                 ? 'Review facility compliance, CQC certificates, insurance credentials, and manage recruitment postings.'
                 : 'Manage registered healthcare professionals, evaluate qualifications, screen CVs, and track hiring stages.'}
             </p>
@@ -1032,7 +731,7 @@ export const AdminPortal: React.FC = () => {
         {/* Global KPI Stat Cards */}
         {activeRole === 'employers' ? (
           <div className="admin-stats-grid">
-            <div 
+            <div
               className={`admin-stat-card ${employerView === 'pending' ? 'selected-stat' : ''}`}
               onClick={() => setEmployerView('pending')}
             >
@@ -1046,7 +745,7 @@ export const AdminPortal: React.FC = () => {
               {pendingEmployerCount > 0 && <span className="stat-tag urgent">Action Required</span>}
             </div>
 
-            <div 
+            <div
               className={`admin-stat-card ${employerView === 'verified' ? 'selected-stat' : ''}`}
               onClick={() => setEmployerView('verified')}
             >
@@ -1060,7 +759,7 @@ export const AdminPortal: React.FC = () => {
               <span className="stat-tag good">Active CQC Registered</span>
             </div>
 
-            <div 
+            <div
               className={`admin-stat-card ${employerView === 'jobs' ? 'selected-stat' : ''}`}
               onClick={() => setEmployerView('jobs')}
             >
@@ -1087,7 +786,7 @@ export const AdminPortal: React.FC = () => {
           </div>
         ) : (
           <div className="admin-stats-grid">
-            <div 
+            <div
               className={`admin-stat-card ${jobSeekerView === 'candidates' ? 'selected-stat' : ''}`}
               onClick={() => setJobSeekerView('candidates')}
             >
@@ -1101,7 +800,7 @@ export const AdminPortal: React.FC = () => {
               <span className="stat-tag good">All Sectors</span>
             </div>
 
-            <div 
+            <div
               className={`admin-stat-card ${jobSeekerView === 'applications' ? 'selected-stat' : ''}`}
               onClick={() => setJobSeekerView('applications')}
             >
@@ -1115,7 +814,7 @@ export const AdminPortal: React.FC = () => {
               <span className="stat-tag urgent">In Pipeline</span>
             </div>
 
-            <div 
+            <div
               className={`admin-stat-card ${jobSeekerView === 'compliance' ? 'selected-stat' : ''}`}
               onClick={() => setJobSeekerView('compliance')}
             >
@@ -1142,6 +841,14 @@ export const AdminPortal: React.FC = () => {
           </div>
         )}
 
+        {loadError && (
+          <div className="admin-login-error" role="alert">
+            <AlertTriangle size={16} />
+            <span>{loadError}</span>
+            <button type="button" className="admin-btn-action-small" onClick={loadAdminData}>Retry</button>
+          </div>
+        )}
+
         {/* Action feedback toast */}
         {actionFeedback && (
           <div className={`admin-toast-feedback ${actionFeedback.type}`} role="status">
@@ -1153,7 +860,7 @@ export const AdminPortal: React.FC = () => {
             ) : (
               <>
                 <XCircle size={18} />
-                <span>Application status updated. Employer has been notified.</span>
+                <span>Employer registration declined. Their portal access has been removed.</span>
               </>
             )}
           </div>
@@ -1181,7 +888,13 @@ export const AdminPortal: React.FC = () => {
                 </div>
 
                 <div className="admin-jobs-grid">
-                  {jobListings.map(job => (
+                  {filteredJobs.length === 0 && (
+                    <div className="admin-empty-state">
+                      <Briefcase size={44} className="admin-empty-icon" />
+                      <h3>No vacancies found</h3>
+                    </div>
+                  )}
+                  {filteredJobs.map(job => (
                     <div key={job.id} className="admin-job-card">
                       <div className="admin-job-top">
                         <span className="admin-job-sector">{job.sector}</span>
@@ -1238,7 +951,7 @@ export const AdminPortal: React.FC = () => {
                       return (
                         <div key={emp.id} className={`admin-card ${isExpanded ? 'expanded' : ''}`}>
                           {/* Card Summary Row */}
-                          <div 
+                          <div
                             className="admin-card-header"
                             onClick={() => setExpandedEmployerId(isExpanded ? null : emp.id)}
                           >
@@ -1276,8 +989,8 @@ export const AdminPortal: React.FC = () => {
                                 <FileText size={14} />
                                 <span>{emp.uploadedDocuments?.length || 0} docs</span>
                               </div>
-                              <button 
-                                className="admin-expand-btn" 
+                              <button
+                                className="admin-expand-btn"
                                 aria-label={isExpanded ? 'Collapse' : 'Expand'}
                               >
                                 {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -1341,9 +1054,9 @@ export const AdminPortal: React.FC = () => {
                                           ) : (
                                             <span className="doc-status-pend"><Clock size={13} /> Pending Vetting</span>
                                           )}
-                                          <button 
+                                          <button
                                             className="admin-btn-action-small"
-                                            onClick={() => alert(`Downloading document: ${doc.name}`)}
+                                            onClick={() => handleDownloadDocument(emp, doc.id, doc.name)}
                                           >
                                             <Download size={13} /> View / Download
                                           </button>
@@ -1358,52 +1071,49 @@ export const AdminPortal: React.FC = () => {
 
                               {/* Decision Action Buttons */}
                               <div className="admin-action-row">
-                                {emp.verificationStatus === 'Pending' && (
+                                {isRejectingThis && (
+                                  <div className="admin-reject-panel">
+                                    <input
+                                      type="text"
+                                      className="admin-reject-input"
+                                      placeholder="Provide compliance query or reason for declining…"
+                                      value={rejectReason}
+                                      onChange={e => setRejectReason(e.target.value)}
+                                    />
+                                    <div className="admin-reject-buttons">
+                                      <button
+                                        className="admin-btn-cancel"
+                                        onClick={() => { setRejectingId(null); setRejectReason(''); }}
+                                      >
+                                        Cancel
+                                      </button>
+                                      <button
+                                        className="admin-btn-danger"
+                                        onClick={() => handleReject(emp)}
+                                      >
+                                        <XCircle size={15} /> Confirm {emp.verificationStatus === 'Verified' ? 'Revoke' : 'Decline'}
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                                {emp.verificationStatus === 'Pending' && !isRejectingThis && (
                                   <>
-                                    {isRejectingThis ? (
-                                      <div className="admin-reject-panel">
-                                        <input
-                                          type="text"
-                                          className="admin-reject-input"
-                                          placeholder="Provide compliance query or reason for declining…"
-                                          value={rejectReason}
-                                          onChange={e => setRejectReason(e.target.value)}
-                                        />
-                                        <div className="admin-reject-buttons">
-                                          <button
-                                            className="admin-btn-cancel"
-                                            onClick={() => { setRejectingId(null); setRejectReason(''); }}
-                                          >
-                                            Cancel
-                                          </button>
-                                          <button
-                                            className="admin-btn-danger"
-                                            onClick={() => handleReject(emp)}
-                                          >
-                                            <XCircle size={15} /> Confirm Decline
-                                          </button>
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      <>
-                                        <button
-                                          className="admin-btn-primary"
-                                          onClick={() => handleApprove(emp)}
-                                        >
-                                          <CheckCircle2 size={16} /> Approve & Grant Verified Access
-                                        </button>
-                                        <button
-                                          className="admin-btn-outline-danger"
-                                          onClick={() => setRejectingId(emp.id)}
-                                        >
-                                          <XCircle size={16} /> Decline Registration
-                                        </button>
-                                      </>
-                                    )}
+                                    <button
+                                      className="admin-btn-primary"
+                                      onClick={() => handleApprove(emp)}
+                                    >
+                                      <CheckCircle2 size={16} /> Approve & Grant Verified Access
+                                    </button>
+                                    <button
+                                      className="admin-btn-outline-danger"
+                                      onClick={() => setRejectingId(emp.id)}
+                                    >
+                                      <XCircle size={16} /> Decline Registration
+                                    </button>
                                   </>
                                 )}
 
-                                {emp.verificationStatus === 'Verified' && (
+                                {emp.verificationStatus === 'Verified' && !isRejectingThis && (
                                   <button
                                     className="admin-btn-outline-danger"
                                     onClick={() => setRejectingId(emp.id)}
@@ -1424,8 +1134,8 @@ export const AdminPortal: React.FC = () => {
                                 <button
                                   className="admin-btn-delete"
                                   onClick={() => {
-                                    if (window.confirm(`Permanently remove ${emp.organisationName}?`)) {
-                                      deleteEmployer(emp.id);
+                                    if (window.confirm(`Permanently remove ${emp.organisationName}? Their vacancies will be closed.`)) {
+                                      handleDeleteEmployer(emp);
                                     }
                                   }}
                                 >
@@ -1490,9 +1200,9 @@ export const AdminPortal: React.FC = () => {
                         <th>Target Role</th>
                         <th>Facility / Employer</th>
                         <th>Applied Date</th>
-                        <th>Match Score</th>
+                        <th>CV Used</th>
                         <th>Application Status</th>
-                        <th>Admin Notes</th>
+                        <th>Candidate Note</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1517,9 +1227,7 @@ export const AdminPortal: React.FC = () => {
                           </td>
                           <td>{app.appliedDate}</td>
                           <td>
-                            <span className="match-score-badge">
-                              {app.matchScore}%
-                            </span>
+                            <span className="cand-sub-text">{app.cvFileName || '—'}</span>
                           </td>
                           <td>
                             <select
@@ -1537,8 +1245,8 @@ export const AdminPortal: React.FC = () => {
                             </select>
                           </td>
                           <td>
-                            <div className="admin-notes-cell" title={app.adminNotes}>
-                              {app.adminNotes || '—'}
+                            <div className="admin-notes-cell" title={app.candidateNote}>
+                              {app.candidateNote || '—'}
                             </div>
                           </td>
                         </tr>
@@ -1621,7 +1329,7 @@ export const AdminPortal: React.FC = () => {
 
                     return (
                       <div key={cand.id} className={`admin-cand-card ${isExpanded ? 'open' : ''}`}>
-                        <div 
+                        <div
                           className="admin-cand-header"
                           onClick={() => setExpandedCandidateId(isExpanded ? null : cand.id)}
                         >
@@ -1672,6 +1380,9 @@ export const AdminPortal: React.FC = () => {
                                 <GraduationCap size={16} /> Education & Academic Qualifications
                               </h4>
                               <div className="cand-edu-list">
+                                {cand.education.length === 0 && (
+                                  <span className="cand-sub-text">No education recorded.</span>
+                                )}
                                 {cand.education.map((edu, idx) => (
                                   <div key={idx} className="cand-edu-item">
                                     <div className="edu-dot" />
@@ -1716,14 +1427,16 @@ export const AdminPortal: React.FC = () => {
                                   <FileText size={18} className="cv-icon" />
                                   <div>
                                     <strong>{cand.cvFileName}</strong>
-                                    <span>{cand.cvFileSize} · PDF Document</span>
+                                    <span>{cand.hasCv ? cand.cvFileSize : "Candidate has not uploaded a CV"}</span>
                                   </div>
-                                  <button 
-                                    className="cand-dl-cv-btn"
-                                    onClick={() => alert(`Downloading CV for ${cand.name}: ${cand.cvFileName}`)}
-                                  >
-                                    <Download size={14} /> Download CV
-                                  </button>
+                                  {cand.hasCv && (
+                                    <button
+                                      className="cand-dl-cv-btn"
+                                      onClick={() => handleDownloadCandidateCv(cand)}
+                                    >
+                                      <Download size={14} /> Download CV
+                                    </button>
+                                  )}
                                 </div>
                               </div>
 
@@ -1748,6 +1461,15 @@ export const AdminPortal: React.FC = () => {
                                   >
                                     {cand.rightToWorkVerified ? <CheckCircle2 size={15} /> : <Clock size={15} />}
                                     <span>{cand.rightToWorkVerified ? 'Right-to-Work Verified' : 'Mark Right-to-Work Verified'}</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    className={`compliance-toggle-btn ${cand.nmcPinVerified ? 'active' : ''}`}
+                                    onClick={() => setCompliance(cand, 'nmcPinVerified')}
+                                  >
+                                    {cand.nmcPinVerified ? <CheckCircle2 size={15} /> : <Clock size={15} />}
+                                    <span>{cand.nmcPinVerified ? 'NMC PIN Verified' : 'Mark NMC PIN Verified (nurses)'}</span>
                                   </button>
                                 </div>
                               </div>

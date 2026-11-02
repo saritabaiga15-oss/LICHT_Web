@@ -1,24 +1,24 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Building2, 
-  Users, 
-  Briefcase, 
-  ShieldCheck, 
-  Search, 
-  Plus, 
-  CheckCircle2, 
-  Clock, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  ArrowRight, 
-  Filter, 
-  FileText, 
-  Calendar, 
-  Sparkles, 
-  LogOut, 
-  ExternalLink, 
+import {
+  Building2,
+  Users,
+  Briefcase,
+  ShieldCheck,
+  Search,
+  Plus,
+  CheckCircle2,
+  Clock,
+  MapPin,
+  Phone,
+  Mail,
+  ArrowRight,
+  Filter,
+  FileText,
+  Calendar,
+  Sparkles,
+  LogOut,
+  ExternalLink,
   ChevronRight,
   Bookmark,
   Check,
@@ -27,13 +27,17 @@ import {
 } from 'lucide-react';
 import { useEmployer } from '../context/EmployerContext';
 import { EmployerJobListing, TalentCandidate, EmployerApplicant } from '../types/employer';
+import { submitEmployerStaffingForm } from '../services/api';
 import './EmployerLanding.css';
 
 export const EmployerLanding: React.FC = () => {
-  const { 
-    employer, 
-    isEmployerAuthenticated, 
-    employerLogin, 
+  const {
+    employer,
+    isEmployerAuthenticated,
+    isEmployerLoading,
+    updateJobStatus,
+    downloadApplicantCv,
+    downloadDocument,
     employerLogout,
     jobListings,
     postNewJob,
@@ -75,6 +79,8 @@ export const EmployerLanding: React.FC = () => {
   const [jobPayRate, setJobPayRate] = useState('£16.00 – £17.50 / hr');
   const [isUrgent, setIsUrgent] = useState(false);
   const [postJobSuccess, setPostJobSuccess] = useState(false);
+  const [postJobError, setPostJobError] = useState<string | null>(null);
+  const [isPostingJob, setIsPostingJob] = useState(false);
 
   // Public quick request staff form state (for non-logged-in landing view)
   const [quickOrg, setQuickOrg] = useState('');
@@ -85,18 +91,26 @@ export const EmployerLanding: React.FC = () => {
   const [quickStaffCount, setQuickStaffCount] = useState('1');
   const [quickUrgency, setQuickUrgency] = useState('Immediate (under 48 hrs)');
   const [quickSubmitSuccess, setQuickSubmitSuccess] = useState(false);
+  const [quickSubmitError, setQuickSubmitError] = useState<string | null>(null);
+  const [quickReference, setQuickReference] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setCandidateContactSuccess(msg);
+    setTimeout(() => setCandidateContactSuccess(null), 5000);
+  };
 
   // Filtered candidate pool
   const filteredCandidates = useMemo(() => {
     return talentPool.filter(c => {
-      const matchQuery = 
+      const matchQuery =
+        !searchQuery ||
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.skills.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) ||
         c.location.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchSector = sectorFilter === 'all' || c.sector.toLowerCase() === sectorFilter.toLowerCase();
-      
+
       let matchExp = true;
       if (experienceFilter === '3plus') matchExp = c.experienceYears >= 3;
       if (experienceFilter === '5plus') matchExp = c.experienceYears >= 5;
@@ -106,19 +120,25 @@ export const EmployerLanding: React.FC = () => {
     });
   }, [talentPool, searchQuery, sectorFilter, experienceFilter]);
 
-  const handlePostJob = (e: React.FormEvent) => {
+  const handlePostJob = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!jobTitle.trim()) return;
+    if (!jobTitle.trim() || !jobLocation.trim() || isPostingJob) return;
 
-    postNewJob({
+    setIsPostingJob(true);
+    setPostJobError(null);
+    const res = await postNewJob({
       title: jobTitle.trim(),
       sector: jobSector,
-      location: jobLocation.trim() || 'London',
+      location: jobLocation.trim(),
       contractType: jobContract,
       payRate: jobPayRate.trim() || 'Competitive',
-      status: 'Active',
       urgentCover: isUrgent
     });
+    setIsPostingJob(false);
+    if (!res.success) {
+      setPostJobError(res.message || 'Could not publish this vacancy.');
+      return;
+    }
 
     setJobTitle('');
     setPostJobSuccess(true);
@@ -128,21 +148,61 @@ export const EmployerLanding: React.FC = () => {
     }, 1800);
   };
 
-  const handleQuickRequestSubmit = (e: React.FormEvent) => {
+  const handleQuickRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!quickOrg.trim() || !quickEmail.trim() || !quickRole.trim()) {
-      alert('Please complete the required fields: Organization, Work Email, and Role.');
+    setQuickSubmitError(null);
+    if (!quickOrg.trim() || !quickEmail.trim() || !quickRole.trim() || !quickContact.trim()) {
+      setQuickSubmitError('Please complete the required fields: organisation, your name, work email and role.');
       return;
     }
-    setQuickSubmitSuccess(true);
+    if (!quickPhone.trim()) {
+      setQuickSubmitError('Please add a contact phone number so a consultant can reach you.');
+      return;
+    }
+    try {
+      const res = await submitEmployerStaffingForm({
+        organisationName: quickOrg.trim(),
+        fullName: quickContact.trim(),
+        email: quickEmail.trim(),
+        telephone: quickPhone.trim(),
+        jobTitle: quickRole.trim(),
+        numberOfVacancies: quickStaffCount,
+        expectedStartDate: quickUrgency,
+        privacyConsent: true
+      });
+      setQuickReference(res?.referenceCode || null);
+      setQuickSubmitSuccess(true);
+    } catch (err: any) {
+      setQuickSubmitError(err?.message || 'Could not submit your request. Please try again or call us.');
+    }
   };
 
-  const handleCandidateInterviewRequest = (candidate: TalentCandidate) => {
-    requestCandidateInterview(candidate.id, `Direct booking inquiry from ${employer ? employer.organisationName : 'Healthcare Employer'}`);
-    setCandidateContactSuccess(`Interview brief dispatched for ${candidate.name}. Our placement desk will call you within 15 minutes.`);
-    setTimeout(() => setCandidateContactSuccess(null), 5000);
+  const handleCandidateInterviewRequest = async (candidate: TalentCandidate) => {
+    const res = await requestCandidateInterview(
+      candidate.id,
+      `Interview request from ${employer ? employer.organisationName : 'employer'} for ${candidate.name}`
+    );
+    showToast(res.success
+      ? `Interview request for ${candidate.name} sent to the LICHT placement desk. A consultant will contact you to arrange it.`
+      : (res.message || 'Could not send the interview request.'));
     setSelectedCandidate(null);
   };
+
+  const handleStatusChange = async (jobId: string, applicantId: string, status: EmployerApplicant['status']) => {
+    const res = await updateApplicantStatus(jobId, applicantId, status);
+    if (!res.success) showToast(res.message || 'Could not update the applicant.');
+    return res.success;
+  };
+
+  if (isEmployerLoading) {
+    return (
+      <div className="employer-dashboard-page">
+        <div className="container emp-dashboard-container">
+          <p>Loading your employer dashboard…</p>
+        </div>
+      </div>
+    );
+  }
 
   // =========================================================================
   // VIEW A: LOGGED-IN EMPLOYER PORTAL DASHBOARD
@@ -150,7 +210,7 @@ export const EmployerLanding: React.FC = () => {
   if (isEmployerAuthenticated && employer) {
     const totalApplicants = jobListings.reduce((sum, j) => sum + j.applicants.length, 0);
     const scheduledInterviews = jobListings.reduce(
-      (sum, j) => sum + j.applicants.filter(a => a.status === 'Interview Scheduled').length, 
+      (sum, j) => sum + j.applicants.filter(a => a.status === 'Interview Scheduled').length,
       0
     );
 
@@ -185,21 +245,24 @@ export const EmployerLanding: React.FC = () => {
                   Welcome back, {employer.contactName}
                 </h1>
                 <p className="emp-dash-meta">
-                  {employer.roleTitle} • {employer.location} • {employer.email}
+                  {[employer.roleTitle, employer.location, employer.email].filter(Boolean).join(' • ')}
                 </p>
               </div>
             </div>
 
             <div className="emp-dash-header__right">
-              <button 
-                type="button" 
-                onClick={() => setActivePortalTab('post-job')}
+              <button
+                type="button"
+                onClick={() => {
+                  setActivePortalTab('post-job');
+                  document.querySelector('.emp-dash-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
                 className="btn-pill-green emp-header-action"
               >
                 <Plus size={16} /> Post a Vacancy
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={employerLogout}
                 className="btn-emp-logout"
                 title="Sign out of Employer Portal"
@@ -230,14 +293,15 @@ export const EmployerLanding: React.FC = () => {
           </section>
 
           {/* Tab Navigation */}
-          <nav className="emp-dash-tabs" aria-label="Employer portal tabs">
+          <nav className="emp-dash-tabs mobile-tab-scroller" aria-label="Employer portal tabs">
             <button
               type="button"
               className={`emp-tab-btn ${activePortalTab === 'vacancies' ? 'emp-tab-btn--active' : ''}`}
               onClick={() => setActivePortalTab('vacancies')}
             >
               <Briefcase size={16} />
-              <span>Active Vacancies & Applicants ({jobListings.length})</span>
+              <span className="tab-label-full">Active Vacancies & Applicants ({jobListings.length})</span>
+              <span className="tab-label-short">Vacancies ({jobListings.length})</span>
             </button>
             <button
               type="button"
@@ -245,7 +309,8 @@ export const EmployerLanding: React.FC = () => {
               onClick={() => setActivePortalTab('sourcing')}
             >
               <Users size={16} />
-              <span>Look for an Employee / Talent Pool ({talentPool.length})</span>
+              <span className="tab-label-full">Look for an Employee / Talent Pool ({talentPool.length})</span>
+              <span className="tab-label-short">Talent Pool ({talentPool.length})</span>
             </button>
             <button
               type="button"
@@ -253,7 +318,8 @@ export const EmployerLanding: React.FC = () => {
               onClick={() => setActivePortalTab('post-job')}
             >
               <Plus size={16} />
-              <span>Post a Vacancy / Shift Cover</span>
+              <span className="tab-label-full">Post a Vacancy / Shift Cover</span>
+              <span className="tab-label-short">Post a Job</span>
             </button>
             <button
               type="button"
@@ -270,7 +336,8 @@ export const EmployerLanding: React.FC = () => {
               }}
             >
               <Building2 size={16} />
-              <span>Company Profile & Documentation</span>
+              <span className="tab-label-full">Company Profile & Documentation</span>
+              <span className="tab-label-short">Company & Docs</span>
             </button>
           </nav>
 
@@ -284,8 +351,8 @@ export const EmployerLanding: React.FC = () => {
                     Review candidate profiles, verify DBS clearances, and schedule interviews directly.
                   </p>
                 </div>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setActivePortalTab('post-job')}
                   className="btn-pill-green"
                 >
@@ -293,6 +360,11 @@ export const EmployerLanding: React.FC = () => {
                 </button>
               </div>
 
+              {jobListings.length === 0 && (
+                <div className="emp-empty-applicants">
+                  <p>You haven't posted any vacancies yet. Post your first role and applications will appear here.</p>
+                </div>
+              )}
               <div className="emp-jobs-stack">
                 {jobListings.map(job => (
                   <div key={job.id} className="emp-job-card">
@@ -310,8 +382,21 @@ export const EmployerLanding: React.FC = () => {
                       </div>
 
                       <div className="emp-job-status-pill">
-                        <span className="status-dot status-dot--active" />
-                        <span>{job.status}</span>
+                        <span className={`status-dot ${job.status === 'Active' ? 'status-dot--active' : ''}`} />
+                        <label htmlFor={`job-status-${job.id}`} className="emp-sr-only">Vacancy status</label>
+                        <select
+                          id={`job-status-${job.id}`}
+                          className="emp-status-select"
+                          value={job.status}
+                          onChange={async (e) => {
+                            const res = await updateJobStatus(job.id, e.target.value as EmployerJobListing['status']);
+                            showToast(res.success ? `Vacancy marked as ${e.target.value}.` : (res.message || 'Could not update vacancy.'));
+                          }}
+                        >
+                          <option value="Active">Active (live on job board)</option>
+                          <option value="Paused">Paused</option>
+                          <option value="Filled">Filled</option>
+                        </select>
                       </div>
                     </div>
 
@@ -321,7 +406,7 @@ export const EmployerLanding: React.FC = () => {
                         <h4 className="emp-applicants-count">
                           {job.applicants.length} Candidate Applications Received
                         </h4>
-                        <span className="emp-applicants-note">All candidates pre-screened with Enhanced DBS</span>
+                        <span className="emp-applicants-note">DBS status as declared by each candidate</span>
                       </div>
 
                       {job.applicants.length === 0 ? (
@@ -339,11 +424,8 @@ export const EmployerLanding: React.FC = () => {
                                   </div>
                                   <div>
                                     <h4 className="emp-applicant-name">{app.candidateName}</h4>
-                                    <p className="emp-applicant-role">{app.currentRole} • {app.experienceYears} yrs exp</p>
+                                    <p className="emp-applicant-role">{app.currentRole || 'Role not specified'} • Applied {app.appliedDate}</p>
                                   </div>
-                                </div>
-                                <div className="emp-match-badge" title="Match score based on experience and compliance">
-                                  <Sparkles size={13} /> {app.matchScore}% Match
                                 </div>
                               </div>
 
@@ -365,8 +447,9 @@ export const EmployerLanding: React.FC = () => {
                                     id={`status-${app.id}`}
                                     className={`emp-status-select emp-status--${app.status.toLowerCase().replace(/\s+/g, '-')}`}
                                     value={app.status}
-                                    onChange={(e) => updateApplicantStatus(job.id, app.id, e.target.value as any)}
+                                    onChange={(e) => handleStatusChange(job.id, app.id, e.target.value as EmployerApplicant['status'])}
                                   >
+                                    <option value="Application Received">Application Received</option>
                                     <option value="Under Review">Under Review</option>
                                     <option value="Shortlisted">Shortlisted</option>
                                     <option value="Interview Scheduled">Interview Scheduled</option>
@@ -399,7 +482,7 @@ export const EmployerLanding: React.FC = () => {
             <div className="emp-tab-content">
               <div className="emp-section-heading-row">
                 <div>
-                  <h2 className="emp-section-title">Look for an Employee • Pre-Screened Talent Pool</h2>
+                  <h2 className="emp-section-title">Look for an Employee • Talent Pool</h2>
                   <p className="emp-section-sub">
                     Direct access to vetted healthcare professionals with verified DBS on the Update Service.
                   </p>
@@ -445,6 +528,11 @@ export const EmployerLanding: React.FC = () => {
               </div>
 
               {/* Candidate Cards Grid */}
+              {filteredCandidates.length === 0 && (
+                <div className="emp-empty-applicants">
+                  <p>{talentPool.length === 0 ? 'No candidates are registered yet.' : 'No candidates match these filters.'}</p>
+                </div>
+              )}
               <div className="emp-talent-grid">
                 {filteredCandidates.map(cand => {
                   const isSaved = savedCandidates.includes(cand.id);
@@ -459,7 +547,10 @@ export const EmployerLanding: React.FC = () => {
                             <h3 className="emp-talent-name">{cand.name}</h3>
                             <button
                               type="button"
-                              onClick={() => toggleSaveCandidate(cand.id)}
+                              onClick={async () => {
+                                const res = await toggleSaveCandidate(cand.id);
+                                if (!res.success) showToast(res.message || 'Could not update your shortlist.');
+                              }}
                               className={`emp-talent-save-btn ${isSaved ? 'emp-talent-save-btn--active' : ''}`}
                               title={isSaved ? 'Remove from shortlist' : 'Save candidate to shortlist'}
                             >
@@ -473,9 +564,9 @@ export const EmployerLanding: React.FC = () => {
                       <div className="emp-talent-meta-inline">
                         <span><MapPin size={13} /> {cand.location}</span>
                         <span>•</span>
-                        <span><Clock size={13} /> {cand.availability}</span>
+                        <span><Clock size={13} /> {cand.availability || 'Availability not given'}</span>
                         <span>•</span>
-                        <strong className="emp-rate-highlight">{cand.expectedRate}</strong>
+                        <strong className="emp-rate-highlight">{cand.verified ? 'DBS & RTW verified' : 'Checks pending'}</strong>
                       </div>
 
                       <div className="emp-talent-skills">
@@ -525,8 +616,14 @@ export const EmployerLanding: React.FC = () => {
                     <CheckCircle2 size={24} />
                     <div>
                       <strong>Vacancy Successfully Published!</strong>
-                      <p>Your listing is now active. Pre-screened candidates will be matched automatically.</p>
+                      <p>Your listing is now live on the public job board. Applications will appear under Active Vacancies.</p>
                     </div>
+                  </div>
+                )}
+
+                {postJobError && (
+                  <div className="emp-error-box" role="alert">
+                    <span>{postJobError}</span>
                   </div>
                 )}
 
@@ -615,11 +712,11 @@ export const EmployerLanding: React.FC = () => {
                   </div>
 
                   <div className="emp-form-btn-row">
-                    <button type="submit" className="btn-pill-green emp-publish-btn">
-                      Publish Vacancy to Talent Pool ↗
+                    <button type="submit" className="btn-pill-green emp-publish-btn" disabled={isPostingJob}>
+                      {isPostingJob ? 'Publishing…' : 'Publish Vacancy to Job Board ↗'}
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => setActivePortalTab('vacancies')}
                       className="btn-pill-outline"
                     >
@@ -642,8 +739,8 @@ export const EmployerLanding: React.FC = () => {
                   </p>
                 </div>
                 {!isEditingProfile && (
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setIsEditingProfile(true)}
                     className="btn-pill-green"
                   >
@@ -662,9 +759,9 @@ export const EmployerLanding: React.FC = () => {
               {isEditingProfile ? (
                 <div className="emp-profile-edit-card">
                   <h3 className="emp-section-subtitle">Update Operational Details</h3>
-                  <form onSubmit={(e) => {
+                  <form onSubmit={async (e) => {
                     e.preventDefault();
-                    updateEmployerProfile({
+                    const res = await updateEmployerProfile({
                       contactName: editContactName.trim() || employer.contactName,
                       roleTitle: editRoleTitle.trim() || employer.roleTitle,
                       phone: editPhone.trim() || employer.phone,
@@ -672,6 +769,10 @@ export const EmployerLanding: React.FC = () => {
                       location: editAddress.trim() || employer.location,
                       website: editWebsite.trim() || employer.website
                     });
+                    if (!res.success) {
+                      showToast(res.message || 'Could not save your profile.');
+                      return;
+                    }
                     setIsEditingProfile(false);
                     setProfileSaveSuccess(true);
                     setTimeout(() => setProfileSaveSuccess(false), 4000);
@@ -699,6 +800,7 @@ export const EmployerLanding: React.FC = () => {
                         <label className="emp-field-label">Direct Contact Phone</label>
                         <input
                           type="tel"
+                          autoComplete="tel"
                           className="emp-field-input"
                           value={editPhone}
                           onChange={(e) => setEditPhone(e.target.value)}
@@ -727,8 +829,8 @@ export const EmployerLanding: React.FC = () => {
                       <button type="submit" className="btn-pill-green">
                         Save Profile Changes
                       </button>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setIsEditingProfile(false)}
                         className="btn-pill-outline"
                       >
@@ -767,15 +869,15 @@ export const EmployerLanding: React.FC = () => {
                       </div>
                       <div className="emp-pcard-row">
                         <span className="emp-pcard-label">CQC Provider ID:</span>
-                        <span className="emp-pcard-value font-mono">{employer.cqcProviderId || '1-102938472'}</span>
+                        <span className="emp-pcard-value font-mono">{employer.cqcProviderId || 'Not provided'}</span>
                       </div>
                       <div className="emp-pcard-row">
                         <span className="emp-pcard-label">Companies House No:</span>
-                        <span className="emp-pcard-value font-mono">{employer.companyNumber || '10982341'}</span>
+                        <span className="emp-pcard-value font-mono">{employer.companyNumber || 'Not provided'}</span>
                       </div>
                       <div className="emp-pcard-row">
                         <span className="emp-pcard-label">Insurance Policy:</span>
-                        <span className="emp-pcard-value font-mono">{employer.insurancePolicy || 'UK-AVIVA-MED-849201'}</span>
+                        <span className="emp-pcard-value font-mono">{employer.insurancePolicy || 'Not provided'}</span>
                       </div>
                       <div className="emp-pcard-row">
                         <span className="emp-pcard-label">Registered Address:</span>
@@ -818,12 +920,8 @@ export const EmployerLanding: React.FC = () => {
                         <span className="emp-pcard-value">{employer.phone}</span>
                       </div>
                       <div className="emp-pcard-row">
-                        <span className="emp-pcard-label">Dedicated Desk:</span>
-                        <span className="emp-pcard-value text-green">London & South East Healthcare Team</span>
-                      </div>
-                      <div className="emp-pcard-row">
-                        <span className="emp-pcard-label">Direct Account SLA:</span>
-                        <span className="emp-pcard-value">Emergency Cover &lt; 2 hours</span>
+                        <span className="emp-pcard-label">Your Account Team:</span>
+                        <span className="emp-pcard-value text-green">LICHT Placement Team</span>
                       </div>
                     </div>
                   </div>
@@ -839,21 +937,20 @@ export const EmployerLanding: React.FC = () => {
                         <h3 className="emp-pcard-title">Attached Company Verification Documents</h3>
                       </div>
                       <span className="emp-verified-badge">
-                        <CheckCircle2 size={14} /> 100% CQC & NHS Framework Verified
+                        <CheckCircle2 size={14} /> {employer.documentsVerified ? 'Documents verified by LICHT' : 'Awaiting compliance review'}
                       </span>
                     </div>
 
                     <div className="emp-docs-grid">
-                      {(employer.uploadedDocuments || [
-                        { id: 'doc-1', name: 'CQC_Registration_Certificate_2026.pdf', type: 'CQC Certificate', size: '2.4 MB', date: 'Verified', verified: true },
-                        { id: 'doc-2', name: 'Employers_Liability_Insurance_Schedule.pdf', type: 'Insurance', size: '1.8 MB', date: 'Verified', verified: true },
-                        { id: 'doc-3', name: 'Companies_House_Incorporation.pdf', type: 'Certificate of Incorporation', size: '1.2 MB', date: 'Verified', verified: true }
-                      ]).map(doc => (
+                      {(employer.uploadedDocuments || []).length === 0 && (
+                        <p className="emp-section-sub">No documents on file. Please email your CQC certificate and insurance schedule to the LICHT compliance team.</p>
+                      )}
+                      {(employer.uploadedDocuments || []).map(doc => (
                         <div key={doc.id} className="emp-doc-card">
                           <div className="emp-doc-card__top">
                             <FileText size={20} className="text-gold" />
                             <span className="emp-doc-status-tag">
-                              <CheckCircle2 size={12} /> {doc.verified ? 'Verified' : 'Pending'}
+                              <CheckCircle2 size={12} /> {doc.verified ? 'Verified' : 'Pending review'}
                             </span>
                           </div>
                           <strong className="emp-doc-card__title">{doc.name}</strong>
@@ -861,12 +958,16 @@ export const EmployerLanding: React.FC = () => {
                           <button
                             type="button"
                             className="emp-doc-download-btn"
-                            onClick={() => alert(`Simulated secure document retrieval: ${doc.name}`)}
+                            onClick={async () => {
+                              const res = await downloadDocument(doc.id, doc.name);
+                              if (!res.success) showToast(res.message || 'Could not download the document.');
+                            }}
                           >
-                            View Document ↗
+                            Download ↗
                           </button>
                         </div>
-                      ))}
+                      ))
+                      }
                     </div>
                   </div>
                 </div>
@@ -883,18 +984,15 @@ export const EmployerLanding: React.FC = () => {
                 <div>
                   <div className="emp-modal-tags-row">
                     <span className="emp-modal-badge">{selectedApplicant.job.title}</span>
-                    <span className="emp-match-badge">
-                      <Sparkles size={13} /> {selectedApplicant.applicant.matchScore}% Role Match
-                    </span>
                   </div>
                   <h3 className="emp-modal-name">{selectedApplicant.applicant.candidateName}</h3>
                   <p className="emp-modal-sub">
-                    {selectedApplicant.applicant.currentRole} • {selectedApplicant.applicant.experienceYears} Years Healthcare Experience • Applied on {selectedApplicant.applicant.appliedDate}
+                    {[selectedApplicant.applicant.currentRole, `Applied on ${selectedApplicant.applicant.appliedDate}`].filter(Boolean).join(' • ')}
                   </p>
                 </div>
-                <button 
-                  type="button" 
-                  className="emp-modal-close" 
+                <button
+                  type="button"
+                  className="emp-modal-close"
                   onClick={() => setSelectedApplicant(null)}
                   aria-label="Close CV Dossier"
                 >
@@ -906,103 +1004,18 @@ export const EmployerLanding: React.FC = () => {
                 {/* Contact & Clearance Summary Strip */}
                 <div className="emp-modal-contact-row">
                   <div><strong>Email:</strong> {selectedApplicant.applicant.email}</div>
-                  <div><strong>Phone:</strong> {selectedApplicant.applicant.phone}</div>
-                  <div><strong>Location:</strong> {selectedApplicant.applicant.location}</div>
+                  <div><strong>Phone:</strong> {selectedApplicant.applicant.phone || 'Not provided'}</div>
+                  <div><strong>Location:</strong> {selectedApplicant.applicant.location || 'Not provided'}</div>
                   <div>
-                    <strong>Compliance:</strong>{' '}
-                    <span className="text-green font-semibold">
-                      <ShieldCheck size={13} style={{ display: 'inline', verticalAlign: 'middle' }} /> {selectedApplicant.applicant.dbsStatus}
-                    </span>
+                    <strong>DBS (self-declared):</strong>{' '}
+                    <span className="font-semibold">{selectedApplicant.applicant.dbsStatus}</span>
                   </div>
                 </div>
 
-                {/* Professional Statement */}
+                {/* Cover note */}
                 <div className="emp-modal-section">
-                  <h4 className="emp-modal-sec-title">Professional Statement & Cover Note</h4>
-                  <p className="emp-modal-text">{selectedApplicant.applicant.coverNote || 'Dedicated healthcare practitioner with exemplary clinical compliance and care standards.'}</p>
-                </div>
-
-                {/* Candidate Work History Timeline */}
-                <div className="emp-modal-section">
-                  <h4 className="emp-modal-sec-title">Work Experience & Employment History</h4>
-                  <div className="emp-cv-timeline">
-                    {(selectedApplicant.applicant.workHistory || [
-                      {
-                        role: selectedApplicant.applicant.currentRole,
-                        company: 'Healthcare & Residential Services UK',
-                        duration: `${selectedApplicant.applicant.experienceYears} years experience`,
-                        details: 'Key responsibilities included administering care plans, supervising shift medication rounds, and liaising with MDT clinical personnel.'
-                      }
-                    ]).map((work, idx) => (
-                      <div key={idx} className="emp-timeline-item">
-                        <div className="emp-timeline-marker" />
-                        <div className="emp-timeline-content">
-                          <div className="emp-timeline-header">
-                            <strong className="emp-timeline-role">{work.role}</strong>
-                            <span className="emp-timeline-date">{work.duration}</span>
-                          </div>
-                          <span className="emp-timeline-company">{work.company}</span>
-                          <p className="emp-timeline-desc">{work.details}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Education & Qualifications */}
-                <div className="emp-modal-section">
-                  <h4 className="emp-modal-sec-title">Healthcare Qualifications & Education</h4>
-                  <ul className="emp-cert-list">
-                    {(selectedApplicant.applicant.education || [
-                      'NVQ Level 3 Diploma in Health & Social Care (Adult Care Pathway)',
-                      'The Care Certificate – Verified by Skills for Care UK'
-                    ]).map((edu, idx) => (
-                      <li key={idx}>
-                        <CheckCircle2 size={15} className="text-gold" />
-                        <span>{edu}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Clinical Skills */}
-                <div className="emp-modal-section">
-                  <h4 className="emp-modal-sec-title">Clinical Skills & Competencies</h4>
-                  <div className="emp-skills-row">
-                    {(selectedApplicant.applicant.skills || [
-                      'Dementia Care',
-                      'Medication Administration Lead',
-                      'Safeguarding Adults Level 3',
-                      'Care Planning',
-                      'Moving & Handling',
-                      'Infection Control'
-                    ]).map(skill => (
-                      <span key={skill} className="emp-skill-chip">{skill}</span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Mandatory Certifications */}
-                <div className="emp-modal-section">
-                  <h4 className="emp-modal-sec-title">Verified Certifications & Clinical Clearance</h4>
-                  <ul className="emp-cert-list">
-                    {(selectedApplicant.applicant.certifications || [
-                      'Enhanced DBS on Update Service (Clean & Current)',
-                      'Basic Life Support (BLS) & CPR (Resuscitation Council UK)',
-                      'Moving & Handling of People Level 2'
-                    ]).map((cert, idx) => (
-                      <li key={idx}>
-                        <CheckCircle2 size={15} className="text-green" />
-                        <span>{cert}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* References */}
-                <div className="emp-ref-notice">
-                  <ShieldCheck size={16} className="text-green" />
-                  <span>2 Verified Clinical References on file with LICHT Compliance Team (Registered Manager & Clinical Lead).</span>
+                  <h4 className="emp-modal-sec-title">Cover Note</h4>
+                  <p className="emp-modal-text">{selectedApplicant.applicant.coverNote || 'No cover note was included with this application.'}</p>
                 </div>
 
                 {/* Official CV Download Banner */}
@@ -1010,13 +1023,14 @@ export const EmployerLanding: React.FC = () => {
                   <FileText size={24} className="text-gold" />
                   <div style={{ flex: 1 }}>
                     <strong>{selectedApplicant.applicant.cvFileName}</strong>
-                    <p>Verified Candidate Dossier (Clinical References, DBS & Mandatory Training Portfolio attached).</p>
+                    <p>The candidate's current CV on file with LICHT.</p>
                   </div>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="btn-pill-outline emp-cv-dl-btn"
-                    onClick={() => {
-                      alert(`Downloading official verified CV: ${selectedApplicant.applicant.cvFileName}`);
+                    onClick={async () => {
+                      const res = await downloadApplicantCv(selectedApplicant.job.id, selectedApplicant.applicant.id, selectedApplicant.applicant.cvFileName);
+                      if (!res.success) showToast(res.message || 'This candidate has not uploaded a CV yet.');
                     }}
                   >
                     Download CV (PDF) ↗
@@ -1031,17 +1045,17 @@ export const EmployerLanding: React.FC = () => {
                       id="modal-app-status"
                       className="emp-status-select"
                       value={selectedApplicant.applicant.status}
-                      onChange={(e) => {
-                        updateApplicantStatus(selectedApplicant.job.id, selectedApplicant.applicant.id, e.target.value as any);
-                        setSelectedApplicant({
-                          ...selectedApplicant,
-                          applicant: {
-                            ...selectedApplicant.applicant,
-                            status: e.target.value as any
-                          }
-                        });
+                      onChange={async (e) => {
+                        const status = e.target.value as EmployerApplicant['status'];
+                        if (await handleStatusChange(selectedApplicant.job.id, selectedApplicant.applicant.id, status)) {
+                          setSelectedApplicant({
+                            ...selectedApplicant,
+                            applicant: { ...selectedApplicant.applicant, status }
+                          });
+                        }
                       }}
                     >
+                      <option value="Application Received">Application Received</option>
                       <option value="Under Review">Under Review</option>
                       <option value="Shortlisted">Shortlisted</option>
                       <option value="Interview Scheduled">Interview Scheduled</option>
@@ -1051,30 +1065,32 @@ export const EmployerLanding: React.FC = () => {
                   </div>
 
                   <div className="emp-modal-action-buttons">
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="btn-pill-green"
-                      onClick={() => {
-                        updateApplicantStatus(selectedApplicant.job.id, selectedApplicant.applicant.id, 'Interview Scheduled');
+                      onClick={async () => {
+                        const name = selectedApplicant.applicant.candidateName;
+                        const ok = await handleStatusChange(selectedApplicant.job.id, selectedApplicant.applicant.id, 'Interview Scheduled');
                         setSelectedApplicant(null);
-                        setCandidateContactSuccess(`Interview invitation dispatched to ${selectedApplicant.applicant.candidateName}. Our placement desk will coordinate times.`);
+                        if (ok) showToast(`${name} marked as Interview Scheduled. Our placement desk will coordinate times.`);
                       }}
                     >
                       Schedule Interview ↗
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="btn-pill-outline"
-                      onClick={() => {
-                        updateApplicantStatus(selectedApplicant.job.id, selectedApplicant.applicant.id, 'Shortlisted');
+                      onClick={async () => {
+                        const name = selectedApplicant.applicant.candidateName;
+                        const ok = await handleStatusChange(selectedApplicant.job.id, selectedApplicant.applicant.id, 'Shortlisted');
                         setSelectedApplicant(null);
-                        setCandidateContactSuccess(`${selectedApplicant.applicant.candidateName} added to Shortlist.`);
+                        if (ok) showToast(`${name} added to Shortlist.`);
                       }}
                     >
                       Shortlist
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="btn-pill-outline"
                       onClick={() => setSelectedApplicant(null)}
                     >
@@ -1097,9 +1113,9 @@ export const EmployerLanding: React.FC = () => {
                   <h3 className="emp-modal-name">{selectedCandidate.name}</h3>
                   <p className="emp-modal-sub">{selectedCandidate.headline}</p>
                 </div>
-                <button 
-                  type="button" 
-                  className="emp-modal-close" 
+                <button
+                  type="button"
+                  className="emp-modal-close"
                   onClick={() => setSelectedCandidate(null)}
                 >
                   ✕
@@ -1128,15 +1144,15 @@ export const EmployerLanding: React.FC = () => {
                 </div>
 
                 <div className="emp-modal-actions">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="btn-pill-green"
                     onClick={() => handleCandidateInterviewRequest(selectedCandidate)}
                   >
                     Request Candidate for Shift / Interview ↗
                   </button>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="btn-pill-outline"
                     onClick={() => setSelectedCandidate(null)}
                   >
@@ -1170,7 +1186,7 @@ export const EmployerLanding: React.FC = () => {
             </h1>
 
             <p className="emp-hero-subtitle">
-              Deploy pre-vetted, DBS-cleared Registered Nurses, Senior Carers, and Healthcare Assistants across London and the UK within 24–48 hours. 100% CQC & NMC audit-ready.
+              Deploy pre-vetted, DBS-cleared Registered Nurses, Senior Carers, and Healthcare Assistants across London and the UK, with compliance documents ready for your inspection files.
             </p>
 
             <div className="emp-hero-cta-group">
@@ -1187,7 +1203,7 @@ export const EmployerLanding: React.FC = () => {
 
             <div className="emp-trust-proof">
               <ShieldCheck size={18} className="text-green" />
-              <span>CQC Registered & Compliant • Enhanced DBS on Update Service • 24/7 Placement Desk</span>
+              <span>Enhanced DBS checked • Right to work verified • Dedicated placement team</span>
             </div>
           </div>
 
@@ -1206,32 +1222,6 @@ export const EmployerLanding: React.FC = () => {
               <p className="emp-hcard-desc">
                 Log in to review verified candidate CVs, schedule interviews, and deploy emergency shift coverage.
               </p>
-
-              <div className="emp-hcard-demo-card">
-                <div className="emp-demo-badge-row">
-                  <span className="emp-demo-pill">
-                    <Sparkles size={12} /> Instant Evaluation Demo
-                  </span>
-                  <span className="emp-demo-facility">St. Jude Care Pavilion</span>
-                </div>
-                <div className="emp-demo-user-row">
-                  <div className="emp-demo-avatar">JT</div>
-                  <div className="emp-demo-user-meta">
-                    <strong>Dr. Julian Thorne</strong>
-                    <span>Registered Manager (Demo Account)</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    employerLogin('j.thorne@stjudecare.co.uk');
-                  }}
-                  className="emp-demo-action-btn"
-                >
-                  <span>Launch Employer Portal Demo</span>
-                  <ArrowRight size={15} />
-                </button>
-              </div>
 
               <div className="emp-hcard-actions-row">
                 <Link to="/employer/login" className="emp-hcard-login-link">
@@ -1253,39 +1243,34 @@ export const EmployerLanding: React.FC = () => {
           <div className="emp-stats-grid">
             <div className="emp-stat-item">
               <div className="emp-stat-metric-row">
-                <span className="emp-stat-num">14,200</span>
-                <span className="emp-stat-accent">+</span>
+                <span className="emp-stat-num">Vetted</span>
               </div>
-              <span className="emp-stat-label">Vetted Healthcare Professionals</span>
-              <span className="emp-stat-sub">Across NHS & Private Care</span>
+              <span className="emp-stat-label">Every Candidate Screened</span>
+              <span className="emp-stat-sub">Enhanced DBS & Right to Work Checks</span>
             </div>
 
             <div className="emp-stat-item">
               <div className="emp-stat-metric-row">
-                <span className="emp-stat-num">99.4</span>
-                <span className="emp-stat-accent">%</span>
+                <span className="emp-stat-num">Flexible</span>
               </div>
-              <span className="emp-stat-label">Shift Fill Rate</span>
-              <span className="emp-stat-sub">Same-Day & Advance Rotas</span>
+              <span className="emp-stat-label">Temporary & Permanent Cover</span>
+              <span className="emp-stat-sub">Single Shifts to Long-Term Roles</span>
             </div>
 
             <div className="emp-stat-item">
               <div className="emp-stat-metric-row">
-                <span className="emp-stat-prefix">&lt;&nbsp;</span>
-                <span className="emp-stat-num">48</span>
-                <span className="emp-stat-unit">&nbsp;hrs</span>
+                <span className="emp-stat-num">Direct</span>
               </div>
-              <span className="emp-stat-label">Average Placement Turnaround</span>
-              <span className="emp-stat-sub">Permanent & Contract</span>
+              <span className="emp-stat-label">Applicants in Your Portal</span>
+              <span className="emp-stat-sub">Review CVs & Shortlist Online</span>
             </div>
 
             <div className="emp-stat-item">
               <div className="emp-stat-metric-row">
-                <span className="emp-stat-num">100</span>
-                <span className="emp-stat-accent">%</span>
+                <span className="emp-stat-num">Verified</span>
               </div>
-              <span className="emp-stat-label">CQC & Safeguarding Audit Pass</span>
-              <span className="emp-stat-sub">Zero Compliance Breach</span>
+              <span className="emp-stat-label">Employers Only</span>
+              <span className="emp-stat-sub">Facility Documents Reviewed Before Access</span>
             </div>
           </div>
         </div>
@@ -1342,59 +1327,12 @@ export const EmployerLanding: React.FC = () => {
             </div>
           </div>
 
-          {/* Talent Grid */}
-          <div className="emp-talent-grid">
-            {filteredCandidates.map(cand => (
-              <div key={cand.id} className="emp-talent-card">
-                <div className="emp-talent-top">
-                  <div className="emp-talent-avatar">
-                    {cand.avatarInitials}
-                  </div>
-                  <div className="emp-talent-title-area">
-                    <div className="emp-talent-name-row">
-                      <h3 className="emp-talent-name">{cand.name}</h3>
-                      <span className="emp-talent-verified-badge" title="Identity & DBS Checked">
-                        <Check size={11} /> Verified
-                      </span>
-                    </div>
-                    <p className="emp-talent-headline">{cand.headline}</p>
-                  </div>
-                </div>
-
-                <div className="emp-talent-meta-inline">
-                  <span><MapPin size={13} /> {cand.location}</span>
-                  <span>•</span>
-                  <span><Clock size={13} /> {cand.availability}</span>
-                  <span>•</span>
-                  <strong className="emp-rate-highlight">{cand.expectedRate}</strong>
-                </div>
-
-                <div className="emp-talent-skills">
-                  {cand.skills.slice(0, 3).map(skill => (
-                    <span key={skill} className="emp-skill-chip">{skill}</span>
-                  ))}
-                </div>
-
-                <div className="emp-talent-actions">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCandidate(cand)}
-                    className="btn-pill-outline emp-btn-profile"
-                  >
-                    View Details
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedCandidate(cand);
-                    }}
-                    className="btn-pill-green emp-btn-hire"
-                  >
-                    Request Candidate ↗
-                  </button>
-                </div>
-              </div>
-            ))}
+          {/* Talent pool is only available to verified employers */}
+          <div className="emp-empty-applicants">
+            <p>
+              Candidate profiles are only shown to verified employer accounts.{' '}
+              <Link to="/employer/login">Sign in</Link> or <Link to="/employer/register">register your organisation</Link> to browse the talent pool.
+            </p>
           </div>
         </div>
       </section>
@@ -1434,8 +1372,9 @@ export const EmployerLanding: React.FC = () => {
                   <CheckCircle2 size={48} className="text-green" />
                   <h3>Staffing Brief Received</h3>
                   <p>
-                    Thank you, {quickContact}. Your vacancy for <strong>{quickRole}</strong> at <em>{quickOrg}</em> has been submitted. A placement coordinator is reviewing your request now.
+                    Thank you, {quickContact}. Your vacancy for <strong>{quickRole}</strong> at <em>{quickOrg}</em> has been submitted. A placement coordinator will contact you shortly.
                   </p>
+                  {quickReference && <p>Your reference: <strong>{quickReference}</strong></p>}
                   <button
                     type="button"
                     onClick={() => setQuickSubmitSuccess(false)}
@@ -1448,7 +1387,12 @@ export const EmployerLanding: React.FC = () => {
               ) : (
                 <form onSubmit={handleQuickRequestSubmit} className="emp-quick-form">
                   <h3 className="emp-qform-title">Quick Staffing Request</h3>
-                  
+                  {quickSubmitError && (
+                    <div className="emp-error-box" role="alert">
+                      <span>{quickSubmitError}</span>
+                    </div>
+                  )}
+
                   <div className="emp-qform-grid">
                     <div className="emp-qfield">
                       <label htmlFor="q-org" className="emp-qlabel">Healthcare Organisation *</label>
@@ -1481,6 +1425,7 @@ export const EmployerLanding: React.FC = () => {
                       <input
                         id="q-email"
                         type="email"
+                        autoComplete="email"
                         className="emp-qinput"
                         placeholder="s.jenkins@caregroup.co.uk"
                         value={quickEmail}
@@ -1490,10 +1435,11 @@ export const EmployerLanding: React.FC = () => {
                     </div>
 
                     <div className="emp-qfield">
-                      <label htmlFor="q-phone" className="emp-qlabel">Contact Phone</label>
+                      <label htmlFor="q-phone" className="emp-qlabel">Contact Phone *</label>
                       <input
                         id="q-phone"
                         type="tel"
+                        autoComplete="tel"
                         className="emp-qinput"
                         placeholder="+44 20 7946 0000"
                         value={quickPhone}
@@ -1546,7 +1492,7 @@ export const EmployerLanding: React.FC = () => {
           <div className="emp-comp-grid">
             <div className="emp-comp-card">
               <ShieldCheck size={28} className="text-gold" />
-              <h3>28-Point DBS & Compliance Check</h3>
+              <h3>Thorough DBS & Compliance Checks</h3>
               <p>
                 Every candidate is audited for Enhanced DBS on the Update Service, RTW in the UK, NMC PIN real-time validity, and verified clinical references.
               </p>
@@ -1554,7 +1500,7 @@ export const EmployerLanding: React.FC = () => {
 
             <div className="emp-comp-card">
               <Award size={28} className="text-gold" />
-              <h3>100% CQC & Safeguarding Ready</h3>
+              <h3>CQC & Safeguarding Ready</h3>
               <p>
                 Complete candidate dossiers and training matrix provided before the first shift to keep your care inspection files immaculate.
               </p>
@@ -1564,7 +1510,7 @@ export const EmployerLanding: React.FC = () => {
               <Clock size={28} className="text-gold" />
               <h3>Rapid Response & Shift Continuity</h3>
               <p>
-                24/7 staffing dispatch with experienced carers who understand person-centred care and adapt quickly to your unit's workflow.
+                Responsive staffing support with experienced carers who understand person-centred care and adapt quickly to your unit's workflow.
               </p>
             </div>
           </div>
@@ -1581,9 +1527,9 @@ export const EmployerLanding: React.FC = () => {
                 <h3 className="emp-modal-name">{selectedCandidate.name}</h3>
                 <p className="emp-modal-sub">{selectedCandidate.headline}</p>
               </div>
-              <button 
-                type="button" 
-                className="emp-modal-close" 
+              <button
+                type="button"
+                className="emp-modal-close"
                 onClick={() => setSelectedCandidate(null)}
               >
                 ✕
@@ -1612,8 +1558,8 @@ export const EmployerLanding: React.FC = () => {
               </div>
 
               <div className="emp-modal-actions">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn-pill-green"
                   onClick={() => {
                     handleCandidateInterviewRequest(selectedCandidate);
@@ -1621,8 +1567,8 @@ export const EmployerLanding: React.FC = () => {
                 >
                   Request Candidate Dossier ↗
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn-pill-outline"
                   onClick={() => setSelectedCandidate(null)}
                 >

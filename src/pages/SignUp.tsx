@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Briefcase, 
-  Lock, 
-  Plus, 
-  Trash2, 
-  UploadCloud, 
-  FileText, 
-  CheckCircle2, 
-  ArrowRight, 
-  ArrowLeft, 
-  ShieldCheck, 
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Briefcase,
+  Lock,
+  Plus,
+  Trash2,
+  UploadCloud,
+  FileText,
+  CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
+  ShieldCheck,
   AlertCircle,
   GraduationCap
 } from 'lucide-react';
@@ -23,7 +23,7 @@ import { ExperienceItem, ExperienceLevel, EducationItem } from '../types/auth';
 import './SignUp.css';
 
 export const SignUp: React.FC = () => {
-  const { signup } = useAuth();
+  const { signup, addExperience, addEducation, uploadCV } = useAuth();
   const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
@@ -41,12 +41,13 @@ export const SignUp: React.FC = () => {
 
   // Step 2: Previous Experience & Professional Profile
   const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel>('3+ years of experience');
+  // Start empty: anything pre-filled here would be saved as if the candidate had entered it
   const [educationList, setEducationList] = useState<Omit<EducationItem, 'id'>[]>([
     {
       qualification: 'NVQ / Diploma (Level 2 or 3 in Health & Social Care)',
-      fieldOfStudy: 'Health & Social Care',
-      institution: 'City & Guilds London',
-      graduationYear: '2023'
+      fieldOfStudy: '',
+      institution: '',
+      graduationYear: ''
     }
   ]);
   const [experiences, setExperiences] = useState<Omit<ExperienceItem, 'id'>[]>([
@@ -61,20 +62,14 @@ export const SignUp: React.FC = () => {
     }
   ]);
   const [bio, setBio] = useState('');
-  const [dbsStatus, setDbsStatus] = useState<'Enhanced DBS on Update Service' | 'Standard DBS' | 'In Progress' | 'Not Registered'>('Enhanced DBS on Update Service');
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([
-    'Care Certificate',
-    'Moving & Handling',
-    'Medication Administration'
-  ]);
+  const [dbsStatus, setDbsStatus] = useState<'' | 'Enhanced DBS on Update Service' | 'Standard DBS' | 'In Progress' | 'Not Registered'>('');
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   // Step 3: CV Upload & Preferences
   const [availability, setAvailability] = useState<'Immediately available' | '1 week notice' | '2 weeks notice' | '1 month notice'>('Immediately available');
-  const [cvFile, setCvFile] = useState<{ name: string; size: string } | null>({
-    name: 'My_Candidate_CV.pdf',
-    size: '412 KB'
-  });
-  const [privacyAgreed, setPrivacyAgreed] = useState(true);
+  const [cvFile, setCvFile] = useState<{ name: string; size: string; file: File } | null>(null);
+  const [privacyAgreed, setPrivacyAgreed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Skill choices
   const availableSkillOptions = [
@@ -152,10 +147,20 @@ export const SignUp: React.FC = () => {
   const handleFileDrop = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const sizeKb = Math.round(file.size / 1024);
+      if (!/\.(pdf|docx?)$/i.test(file.name)) {
+        setError('Please upload a PDF, DOC or DOCX file.');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setError('CV must be 10MB or smaller.');
+        return;
+      }
+      const sizeKb = Math.max(1, Math.round(file.size / 1024));
+      setError(null);
       setCvFile({
         name: file.name,
-        size: `${sizeKb} KB`
+        size: `${sizeKb} KB`,
+        file
       });
     }
   };
@@ -168,8 +173,8 @@ export const SignUp: React.FC = () => {
       setError('Please fill in all personal contact fields.');
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+      setError('Password must be at least 8 characters and include a letter and a number.');
       return;
     }
     if (password !== confirmPassword) {
@@ -187,6 +192,11 @@ export const SignUp: React.FC = () => {
 
     const isStudentOrFresher = experienceLevel === 'Student' || experienceLevel === 'Fresher / Entry level';
     const firstExp = experiences[0];
+
+    if (!dbsStatus) {
+      setError('Please select your DBS clearance status.');
+      return;
+    }
 
     // For experienced candidates, require at least one previous role
     if (!isStudentOrFresher && (!firstExp.jobTitle.trim() || !firstExp.company.trim())) {
@@ -207,53 +217,51 @@ export const SignUp: React.FC = () => {
       return;
     }
 
-    // Format experiences with IDs (filtering out empty rows if student/fresher skipped it)
-    const formattedExperiences: ExperienceItem[] = experiences
-      .filter(exp => exp.jobTitle.trim() || exp.company.trim())
-      .map((exp, idx) => ({
-        ...exp,
-        id: `exp-${Date.now()}-${idx}`
-      }));
+    setIsSubmitting(true);
 
-    // Format education items
-    const formattedEducation: EducationItem[] = educationList.map((edu, idx) => ({
-      ...edu,
-      id: `edu-${Date.now()}-${idx}`
-    }));
-
-    // Register user profile
+    // Register the account with only what the candidate entered
     const res = await signup({
-      fullName,
-      email,
+      fullName: fullName.trim(),
+      email: email.trim(),
       password,
-      phone,
-      location,
-      postcode: postcode || 'London, UK',
-      headline: `${experiences[0]?.jobTitle || (experienceLevel === 'Student' ? 'Healthcare Student' : 'Entry-level Healthcare Assistant')} · ${targetSector}`,
+      phone: phone.trim(),
+      location: location.trim(),
+      postcode: postcode.trim(),
+      headline: experiences[0]?.jobTitle.trim() ? `${experiences[0].jobTitle.trim()} · ${targetSector}` : '',
       experienceLevel,
-      education: formattedEducation,
       targetSector,
       availability,
       dbsStatus,
-      bio: bio.trim() || `${experienceLevel} candidate with a strong commitment to delivering quality patient and resident care in ${targetSector.toLowerCase()}. Committed to dignity, empathy, and professional compliance.`,
+      bio: bio.trim(),
       skills: selectedSkills,
-      certifications: [
-        'Right to Work in UK Verified',
-        dbsStatus,
-        ...selectedSkills.slice(0, 2)
-      ],
-      previousExperience: formattedExperiences,
-      savedCV: cvFile ? {
-        fileName: cvFile.name,
-        fileSize: cvFile.size,
-        uploadedDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-      } : null
+      certifications: []
     });
 
-    if (res && !res.success) {
+    if (!res.success) {
+      setIsSubmitting(false);
       setError(res.message || 'Registration failed. Please check your information and try again.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
+    }
+
+    // The account now exists; attach work history, education and CV to it
+    const problems: string[] = [];
+    for (const exp of experiences.filter(x => x.jobTitle.trim() || x.company.trim())) {
+      const r = await addExperience(exp);
+      if (!r.success) problems.push(r.message || 'experience');
+    }
+    for (const edu of educationList.filter(x => x.qualification.trim() && (x.institution.trim() || x.fieldOfStudy.trim()))) {
+      const r = await addEducation(edu);
+      if (!r.success) problems.push(r.message || 'education');
+    }
+    if (cvFile) {
+      const r = await uploadCV(cvFile.file);
+      if (!r.success) problems.push(r.message || 'CV upload');
+    }
+    setIsSubmitting(false);
+
+    if (problems.length > 0) {
+      alert(`Your account was created, but some details could not be saved: ${problems.join('; ')}. You can add them from your profile.`);
     }
 
     // Navigate to candidate profile
@@ -319,6 +327,7 @@ export const SignUp: React.FC = () => {
                       id="reg-name"
                       type="text"
                       value={fullName}
+                      autoComplete="name"
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="e.g. Sarah Jenkins"
                       className="auth-input"
@@ -334,6 +343,7 @@ export const SignUp: React.FC = () => {
                     <input
                       id="reg-email"
                       type="email"
+                      autoComplete="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="sarah.jenkins@example.co.uk"
@@ -352,6 +362,7 @@ export const SignUp: React.FC = () => {
                     <input
                       id="reg-phone"
                       type="tel"
+                      autoComplete="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+44 7700 900123"
@@ -421,9 +432,10 @@ export const SignUp: React.FC = () => {
                     <input
                       id="reg-password"
                       type="password"
+                      autoComplete="new-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Min. 6 characters"
+                      placeholder="Min. 8 characters, letters + numbers"
                       className="auth-input"
                       required
                     />
@@ -437,6 +449,7 @@ export const SignUp: React.FC = () => {
                     <input
                       id="reg-confirm-password"
                       type="password"
+                      autoComplete="new-password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Re-enter password"
@@ -762,13 +775,15 @@ export const SignUp: React.FC = () => {
 
                 <div className="form-grid-2" style={{ marginTop: '20px' }}>
                   <div className="form-field">
-                    <label className="field-label">UK DBS Clearance Status</label>
+                    <label className="field-label">UK DBS Clearance Status *</label>
                     <select
                       value={dbsStatus}
                       onChange={(e) => setDbsStatus(e.target.value as any)}
                       className="auth-input auth-select"
                       style={{ paddingLeft: '14px' }}
+                      required
                     >
+                      <option value="" disabled>Select your DBS status…</option>
                       <option value="Enhanced DBS on Update Service">Enhanced DBS on Update Service (Active)</option>
                       <option value="Standard DBS">Standard DBS Certificate</option>
                       <option value="In Progress">Application Currently in Progress</option>
@@ -822,9 +837,9 @@ export const SignUp: React.FC = () => {
                 <div className="cv-upload-info">
                   <h3 className="cv-upload-heading">Upload Your Saved CV / Resume</h3>
                   <p className="cv-upload-sub">
-                    PDF, DOC, or DOCX up to 5MB. Your saved CV will be attached to your candidate profile.
+                    PDF, DOC, or DOCX up to 10MB. Your saved CV will be attached to your candidate profile.
                   </p>
-                  
+
                   {cvFile && (
                     <div className="attached-cv-pill">
                       <FileText size={18} className="pill-file-icon" />
@@ -838,10 +853,10 @@ export const SignUp: React.FC = () => {
 
                   <label className="cv-file-picker-btn">
                     <span>Browse or Replace Document</span>
-                    <input 
-                      type="file" 
-                      accept=".pdf,.doc,.docx" 
-                      onChange={handleFileDrop} 
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleFileDrop}
                       style={{ display: 'none' }}
                     />
                   </label>
@@ -858,8 +873,8 @@ export const SignUp: React.FC = () => {
                     { label: '2 weeks notice', desc: 'Standard notice period' },
                     { label: '1 month notice', desc: 'Corporate or permanent contract notice' }
                   ].map((opt) => (
-                    <label 
-                      key={opt.label} 
+                    <label
+                      key={opt.label}
                       className={`avail-option-card ${availability === opt.label ? 'avail-option-card--active' : ''}`}
                     >
                       <input
@@ -903,8 +918,8 @@ export const SignUp: React.FC = () => {
                 >
                   <ArrowLeft size={18} /> Back to experience
                 </button>
-                <button type="submit" className="btn-pill-green step-next-btn">
-                  Complete Registration & View Profile <CheckCircle2 size={18} />
+                <button type="submit" className="btn-pill-green step-next-btn" disabled={isSubmitting}>
+                  {isSubmitting ? "Creating your profile…" : <>Complete Registration & View Profile <CheckCircle2 size={18} /></>}
                 </button>
               </div>
             </form>

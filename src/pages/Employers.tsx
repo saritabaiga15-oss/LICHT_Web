@@ -211,6 +211,7 @@ export const Employers: React.FC = () => {
                       <div className="input-with-icon">
                         <input 
                           type="email" 
+                          autoComplete="email"
                           id="email" 
                           className={`form-input ${errors.email ? 'form-input--error' : ''}`}
                           placeholder="alex@"
@@ -228,6 +229,7 @@ export const Employers: React.FC = () => {
                       </label>
                       <input 
                         type="tel" 
+                        autoComplete="tel"
                         id="phone" 
                         className="form-input"
                         placeholder="Your contact number"

@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Mail, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  ArrowRight, 
-  ShieldCheck, 
-  Sparkles, 
-  CheckCircle2, 
-  AlertCircle 
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { BrandLogo } from '../components/common/BrandLogo';
@@ -57,18 +56,13 @@ export const Login: React.FC = () => {
     }
   };
 
-  const handleDemoLogin = async () => {
-    setIsLoading(true);
-    await login('eleanor.vance@licht-talent.co.uk', 'password123');
-    setIsLoading(false);
-    navigate('/profile', { replace: true });
-  };
-
   return (
     <div className="auth-page">
       <div className="container auth-container">
         {/* Left / Top Editorial Banner */}
         <div className="auth-intro-card">
+          {/* On phones the intro splits around the form: this part above it... */}
+          <div className="auth-intro-top">
           <div className="auth-intro-header">
             <BrandLogo variant="dark" />
             <div className="auth-badge-pill">
@@ -85,7 +79,10 @@ export const Login: React.FC = () => {
           <p className="auth-intro-desc">
             Sign in to track real-time applications across NHS trusts, care homes, and supported living providers. Manage your saved CV and update your shift availability with LICHT.
           </p>
+          </div>
 
+          {/* ...and the benefits below it */}
+          <div className="auth-intro-bottom">
           <div className="auth-perks-list">
             <div className="auth-perk-item">
               <CheckCircle2 size={18} className="auth-perk-icon" />
@@ -114,6 +111,7 @@ export const Login: React.FC = () => {
             <ShieldCheck size={16} />
             <span>UK GDPR Compliant · Strict candidate confidentiality guaranteed</span>
           </div>
+          </div>
         </div>
 
         {/* Right Form Card */}
@@ -123,29 +121,6 @@ export const Login: React.FC = () => {
             <p className="auth-form-subtitle">
               Enter your credentials to access your candidate profile.
             </p>
-          </div>
-
-          {/* Quick Demo Login Option */}
-          <div className="demo-login-box">
-            <div className="demo-login-left">
-              <Sparkles size={18} className="demo-sparkle-icon" />
-              <div>
-                <strong>Fast Preview: Demo Candidate</strong>
-                <p>Sign in instantly as Eleanor Vance (Senior Care Specialist)</p>
-              </div>
-            </div>
-            <button 
-              type="button" 
-              onClick={handleDemoLogin}
-              className="btn-pill-green demo-signin-btn"
-              disabled={isLoading}
-            >
-              1-Click Demo Login ↗
-            </button>
-          </div>
-
-          <div className="auth-divider">
-            <span>or sign in with email</span>
           </div>
 
           {error && (
@@ -165,6 +140,7 @@ export const Login: React.FC = () => {
                 <input
                   id="login-email"
                   type="email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.co.uk"
@@ -179,15 +155,16 @@ export const Login: React.FC = () => {
                 <label htmlFor="login-password" className="field-label">
                   Password
                 </label>
-                <a href="#forgot" onClick={(e) => { e.preventDefault(); alert('In this demonstration, you can log in with any password or use the 1-Click Demo Login button.'); }} className="forgot-link">
+                <Link to="/contact" className="forgot-link" title="Contact our team to reset your password">
                   Forgot password?
-                </a>
+                </Link>
               </div>
               <div className="input-with-icon">
                 <Lock size={18} className="field-icon" />
                 <input
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
@@ -216,8 +193,8 @@ export const Login: React.FC = () => {
               </label>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="btn-pill-green auth-submit-btn"
               disabled={isLoading}
             >

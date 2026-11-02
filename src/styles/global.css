@@ -107,6 +107,7 @@ button {
 }
 
 input, textarea, select {
+  max-width: 100%;
   font-family: inherit;
   font-size: 1rem; /* 16px minimum prevents iOS Safari auto-zooming on focus */
 }
@@ -348,4 +349,82 @@ button:hover .arrow-up-right {
   align-items: center;
   gap: 14px;
   flex-wrap: wrap;
+}
+
+/* ===== MOBILE BASELINE (phones & small tablets) ===== */
+@media (max-width: 768px) {
+  /* iOS Safari zooms into any field with text smaller than 16px */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+  }
+
+  /* Long button labels in page content wrap instead of pushing the page sideways
+     (header buttons are short and stay on one line) */
+  main .btn-pill-green,
+  main .btn-pill-outline,
+  main .btn-pill-white,
+  main .btn-pill-navy {
+    white-space: normal;
+    text-align: center;
+    min-height: 44px;
+  }
+
+  /* Wide tables scroll inside their own box rather than the whole page */
+  table {
+    max-width: 100%;
+  }
+
+  h1, h2, h3 {
+    overflow-wrap: break-word;
+  }
+}
+
+/* ===== DASHBOARD TAB BARS ON PHONES =====
+   Tabs become a single swipeable row instead of wrapping or overflowing the page. */
+.tab-label-short {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .tab-label-full {
+    display: none;
+  }
+  .tab-label-short {
+    display: inline;
+  }
+
+  .mobile-tab-scroller {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    /* bleed to the screen edges so tabs can be swiped from edge to edge */
+    margin-left: -16px !important;
+    margin-right: -16px !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    max-width: none !important;
+    width: auto !important;
+  }
+  .mobile-tab-scroller::-webkit-scrollbar {
+    display: none;
+  }
+  .mobile-tab-scroller > * {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    scroll-snap-align: start;
+    min-height: 44px;
+  }
 }
