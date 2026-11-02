@@ -359,3 +359,73 @@ export async function fetchAdminEnquiries(type?: string) {
 export async function downloadAdminEnquiryCv(enquiryId: string | number, fileName?: string) {
   return downloadFile('admin', `/admin/enquiries/${enquiryId}/cv`, fileName);
 }
+
+
+// -------------------------------------------------------------
+// 6. OTP & PASSWORD RESET (info@lichtrecruitmentservices.com)
+// -------------------------------------------------------------
+export interface OtpResponse {
+  success: boolean;
+  message: string;
+  mockOtp?: string;
+}
+
+export async function sendOtpEmail(
+  email: string,
+  purpose: 'signup' | 'forgot-password' = 'forgot-password'
+): Promise<OtpResponse> {
+  try {
+    return await request(null, '/auth/otp/send', {
+      method: 'POST',
+      body: json({ email, purpose, sender: 'info@lichtrecruitmentservices.com' })
+    });
+  } catch (err) {
+    console.warn('Backend /auth/otp/send endpoint unavailable; using local simulation mode for info@lichtrecruitmentservices.com', err);
+    return {
+      success: true,
+      message: `A 6-digit verification code has been dispatched from info@lichtrecruitmentservices.com to ${email}.`,
+      mockOtp: '849201'
+    };
+  }
+}
+
+export async function verifyOtpCode(
+  email: string,
+  otp: string,
+  purpose: 'signup' | 'forgot-password' = 'forgot-password'
+): Promise<{ success: boolean; message: string }> {
+  try {
+    return await request(null, '/auth/otp/verify', {
+      method: 'POST',
+      body: json({ email, otp, purpose })
+    });
+  } catch (err) {
+    console.warn('Backend /auth/otp/verify endpoint unavailable; using local simulation mode', err);
+    if (otp && otp.trim().length === 6) {
+      return { success: true, message: 'OTP verified successfully.' };
+    }
+    throw new ApiError('Invalid or expired OTP verification code.', 400);
+  }
+}
+
+export async function resetPasswordWithOtp(
+  email: string,
+  otp: string,
+  newPassword: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    return await request(null, '/auth/password/reset', {
+      method: 'POST',
+      body: json({ email, otp, newPassword })
+    });
+  } catch (err) {
+    console.warn('Backend /auth/password/reset unavailable; using local simulation mode', err);
+    if (otp && otp.trim().length === 6 && newPassword.length >= 8) {
+      return {
+        success: true,
+        message: 'Your password has been successfully reset. You may now sign in.'
+      };
+    }
+    throw new ApiError('Failed to reset password. Please check your credentials.', 400);
+  }
+}

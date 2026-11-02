@@ -155,7 +155,7 @@ export const Login: React.FC = () => {
                 <label htmlFor="login-password" className="field-label">
                   Password
                 </label>
-                <Link to="/contact" className="forgot-link" title="Contact our team to reset your password">
+                <Link to="/forgot-password" className="forgot-link" title="Reset your password via OTP from info@lichtrecruitmentservices.com">
                   Forgot password?
                 </Link>
               </div>

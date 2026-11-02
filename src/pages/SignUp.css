@@ -640,3 +640,133 @@
   }
 }
 
+
+/* ===== EMAIL OTP VERIFICATION IN SIGNUP ===== */
+.email-otp-verified-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #ecfdf3;
+  color: #027a48;
+  border: 1px solid #a6f4c5;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill, 9999px);
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.email-otp-wrapper {
+  margin-top: 8px;
+}
+
+.email-otp-prompt-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.email-otp-action-btn {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid var(--color-brand-gold, #a88538);
+  color: var(--color-brand-gold, #a88538);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.email-otp-action-btn:hover:not(:disabled) {
+  background-color: rgba(168, 133, 56, 0.08);
+}
+
+.email-otp-action-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  border-color: #d0d5dd;
+  color: #98a2b3;
+}
+
+.email-otp-helper {
+  font-size: 0.74rem;
+  color: #667085;
+}
+
+.email-otp-helper code {
+  background: #f2efe9;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.74rem;
+}
+
+.email-otp-card {
+  background: #faf8f4;
+  border: 1px solid var(--color-hairline, #e3ded5);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.email-otp-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.signup-otp-input {
+  width: 140px;
+  height: 38px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-family: monospace;
+  background: #ffffff;
+  border: 1px solid var(--color-hairline, #d4cebe);
+  border-radius: 6px;
+  padding: 0 8px;
+}
+
+.signup-otp-input:focus {
+  outline: none;
+  border-color: var(--color-brand-gold, #a88538);
+  box-shadow: 0 0 0 2px rgba(168, 133, 56, 0.15);
+}
+
+.email-otp-confirm-btn {
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.email-otp-resend-btn {
+  background: none;
+  border: none;
+  color: var(--color-brand-gold, #a88538);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.email-otp-resend-btn:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.email-otp-resend-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.email-otp-notice-msg {
+  font-size: 0.78rem;
+  color: #027a48;
+  font-weight: 500;
+}

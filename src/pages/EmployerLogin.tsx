@@ -363,7 +363,7 @@ export const EmployerLogin: React.FC<EmployerLoginProps> = ({ initialTab = 'sign
                   <div className="emp-input-group">
                     <div className="emp-label-row">
                       <label htmlFor="emp-pwd" className="emp-label">Password</label>
-                      <Link to="/contact" className="emp-forgot-link" title="Contact our team to reset your password">
+                      <Link to="/forgot-password" className="emp-forgot-link" title="Reset your password via OTP from info@lichtrecruitmentservices.com">
                         Forgot password?
                       </Link>
                     </div>

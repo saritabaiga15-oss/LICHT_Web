@@ -72,7 +72,7 @@ export const PrivacyPolicy: React.FC = () => {
               <li>The right to restrict or object to processing.</li>
             </ul>
             <p>
-              To exercise any of these rights, please contact our Data Protection desk via <a href="mailto:enquiries@lichtrecruitmentservices.com">enquiries@lichtrecruitmentservices.com</a>.
+              To exercise any of these rights, please contact our Data Protection desk via <a href="mailto:info@lichtrecruitmentservices.com">info@lichtrecruitmentservices.com</a>.
             </p>
           </div>
         </div>

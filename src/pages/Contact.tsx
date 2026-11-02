@@ -352,8 +352,8 @@ export const Contact: React.FC = () => {
                 </div>
                 <div>
                   <span className="side-channel-label">Email Enquiries</span>
-                  <a href="mailto:enquiries@lichtrecruitmentservices.com" className="side-channel-val side-channel-link">
-                    enquiries@lichtrecruitmentservices.com
+                  <a href="mailto:info@lichtrecruitmentservices.com" className="side-channel-val side-channel-link">
+                    info@lichtrecruitmentservices.com
                   </a>
                 </div>
               </div>

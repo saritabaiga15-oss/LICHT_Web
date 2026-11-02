@@ -21,6 +21,7 @@ import { CookiePolicy } from './pages/CookiePolicy';
 import { Terms } from './pages/Terms';
 import { NotFound } from './pages/NotFound';
 import { Login } from './pages/Login';
+import { ForgotPassword } from './pages/ForgotPassword';
 import { SignUp } from './pages/SignUp';
 import { Profile } from './pages/Profile';
 import { EmployerLanding } from './pages/EmployerLanding';
@@ -71,6 +72,7 @@ const AppShell: React.FC = () => {
           <Route path="/submit-cv" element={<SubmitCV />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/admin" element={<AdminPortal />} />

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ExperienceItem, ExperienceLevel, EducationItem } from '../types/auth';
+import { sendOtpEmail, verifyOtpCode } from '../services/api';
 import './SignUp.css';
 
 export const SignUp: React.FC = () => {
@@ -38,6 +39,13 @@ export const SignUp: React.FC = () => {
   const [targetSector, setTargetSector] = useState<'Care homes' | 'Healthcare' | 'Supported living' | 'Corporate'>('Care homes');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [signupOtp, setSignupOtp] = useState('');
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [otpNotice, setOtpNotice] = useState<string | null>(null);
+  const [otpCooldown, setOtpCooldown] = useState(0);
 
   // Step 2: Previous Experience & Professional Profile
   const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel>('3+ years of experience');
@@ -165,12 +173,55 @@ export const SignUp: React.FC = () => {
     }
   };
 
+  const handleSendSignupOtp = async () => {
+    if (!email.trim() || !email.includes('@')) {
+      setError('Please enter a valid email address first.');
+      return;
+    }
+    setError(null);
+    setOtpSending(true);
+    try {
+      const res = await sendOtpEmail(email.trim().toLowerCase(), 'signup');
+      setShowOtpInput(true);
+      setOtpCooldown(60);
+      setOtpNotice(res.message || `Verification code dispatched from info@lichtrecruitmentservices.com to ${email.trim()}`);
+    } catch (err: any) {
+      setError(err?.message || 'Could not send verification OTP.');
+    } finally {
+      setOtpSending(false);
+    }
+  };
+
+  const handleVerifySignupOtp = async () => {
+    if (signupOtp.trim().length !== 6) {
+      setError('Please enter the 6-digit OTP code received from info@lichtrecruitmentservices.com.');
+      return;
+    }
+    setError(null);
+    setOtpVerifying(true);
+    try {
+      await verifyOtpCode(email.trim().toLowerCase(), signupOtp.trim(), 'signup');
+      setEmailVerified(true);
+      setShowOtpInput(false);
+      setOtpNotice('✓ Email address verified successfully with info@lichtrecruitmentservices.com!');
+    } catch (err: any) {
+      setError(err?.message || 'Invalid or expired OTP code.');
+    } finally {
+      setOtpVerifying(false);
+    }
+  };
+
   const handleStep1Next = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     if (!fullName.trim() || !email.trim() || !phone.trim() || !location.trim()) {
       setError('Please fill in all personal contact fields.');
+      return;
+    }
+    if (!emailVerified) {
+      setError('Please verify your email address with the 6-digit OTP code dispatched from info@lichtrecruitmentservices.com.');
+      setShowOtpInput(true);
       return;
     }
     if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
@@ -334,6 +385,64 @@ export const SignUp: React.FC = () => {
                       required
                     />
                   </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-field">
@@ -345,12 +454,131 @@ export const SignUp: React.FC = () => {
                       type="email"
                       autoComplete="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setEmailVerified(false);
+                      }}
                       placeholder="sarah.jenkins@example.co.uk"
                       className="auth-input"
                       required
                     />
                   </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Verify Email (Send 6-Digit OTP)'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -370,6 +598,64 @@ export const SignUp: React.FC = () => {
                       required
                     />
                   </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-field">
@@ -388,6 +674,64 @@ export const SignUp: React.FC = () => {
                       <option value="Corporate">Corporate & Business Operations</option>
                     </select>
                   </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -406,6 +750,64 @@ export const SignUp: React.FC = () => {
                       required
                     />
                   </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-field">
@@ -421,6 +823,64 @@ export const SignUp: React.FC = () => {
                       className="auth-input"
                     />
                   </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -440,6 +900,64 @@ export const SignUp: React.FC = () => {
                       required
                     />
                   </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-field">
@@ -457,6 +975,64 @@ export const SignUp: React.FC = () => {
                       required
                     />
                   </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -510,6 +1086,64 @@ export const SignUp: React.FC = () => {
                       <span>Select your cumulative career experience in care homes, hospitals, or supported living.</span>
                     )}
                   </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -524,6 +1158,64 @@ export const SignUp: React.FC = () => {
                       Add your degree, care certificate, or highest qualification (not heavily detailed).
                     </p>
                   </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="education-cards-stack">
@@ -542,6 +1234,64 @@ export const SignUp: React.FC = () => {
                           </button>
                         )}
                       </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                       <div className="form-grid-2">
                         <div className="form-field">
@@ -562,6 +1312,64 @@ export const SignUp: React.FC = () => {
                           </select>
                         </div>
 
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                         <div className="form-field">
                           <label className="field-label">Field of Study / Course Subject</label>
                           <input
@@ -573,7 +1381,123 @@ export const SignUp: React.FC = () => {
                             style={{ paddingLeft: '14px' }}
                           />
                         </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                       </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                       <div className="form-grid-2">
                         <div className="form-field">
@@ -588,6 +1512,64 @@ export const SignUp: React.FC = () => {
                           />
                         </div>
 
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                         <div className="form-field">
                           <label className="field-label">Year of Completion / Expected</label>
                           <input
@@ -599,8 +1581,182 @@ export const SignUp: React.FC = () => {
                             style={{ paddingLeft: '14px' }}
                           />
                         </div>
-                      </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
                     </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                      </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                    </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   ))}
 
                   <button
@@ -637,6 +1793,64 @@ export const SignUp: React.FC = () => {
                         <div className="exp-badge">
                           Role #{index + 1} {isEntry ? '(Optional / Placement)' : ''}
                         </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                         {experiences.length > 1 && (
                           <button
                             type="button"
@@ -648,6 +1862,64 @@ export const SignUp: React.FC = () => {
                           </button>
                         )}
                       </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                       <div className="form-grid-2">
                         <div className="form-field">
@@ -665,6 +1937,64 @@ export const SignUp: React.FC = () => {
                           />
                         </div>
 
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                         <div className="form-field">
                           <label className="field-label">
                             Employer / Organisation {isEntry ? '(Optional)' : '*'}
@@ -679,7 +2009,123 @@ export const SignUp: React.FC = () => {
                             required={!isEntry && index === 0}
                           />
                         </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                       </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                       <div className="form-grid-3">
                         <div className="form-field">
@@ -694,6 +2140,64 @@ export const SignUp: React.FC = () => {
                           />
                         </div>
 
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                         <div className="form-field">
                           <label className="field-label">Start Date</label>
                           <input
@@ -705,6 +2209,64 @@ export const SignUp: React.FC = () => {
                             style={{ paddingLeft: '14px' }}
                           />
                         </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                         <div className="form-field">
                           <label className="field-label">End Date</label>
@@ -726,7 +2288,123 @@ export const SignUp: React.FC = () => {
                             <span>I currently work here</span>
                           </label>
                         </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                       </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                       <div className="form-field">
                         <label className="field-label">Key Responsibilities & Achievements</label>
@@ -738,7 +2416,123 @@ export const SignUp: React.FC = () => {
                           className="auth-textarea"
                         />
                       </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
                     </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                    </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   );
                 })}
 
@@ -771,6 +2565,64 @@ export const SignUp: React.FC = () => {
                       );
                     })}
                   </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-grid-2" style={{ marginTop: '20px' }}>
@@ -791,6 +2643,64 @@ export const SignUp: React.FC = () => {
                     </select>
                   </div>
 
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="form-field">
                     <label className="field-label">Short Professional Summary</label>
                     <textarea
@@ -801,6 +2711,64 @@ export const SignUp: React.FC = () => {
                       className="auth-textarea"
                     />
                   </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -847,8 +2815,124 @@ export const SignUp: React.FC = () => {
                         <span className="cv-name">{cvFile.name}</span>
                         <span className="cv-size">({cvFile.size})</span>
                       </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                       <span className="ready-badge">Ready for applications</span>
                     </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   )}
 
                   <label className="cv-file-picker-btn">
@@ -890,6 +2974,64 @@ export const SignUp: React.FC = () => {
                         <strong>{opt.label}</strong>
                         <p>{opt.desc}</p>
                       </div>
+
+                  {/* Email OTP Verification Section */}
+                  {emailVerified ? (
+                    <div className="email-otp-verified-pill">
+                      <CheckCircle2 size={15} />
+                      <span>Verified via info@lichtrecruitmentservices.com</span>
+                    </div>
+                  ) : (
+                    <div className="email-otp-wrapper">
+                      {!showOtpInput ? (
+                        <div className="email-otp-prompt-row">
+                          <button
+                            type="button"
+                            onClick={handleSendSignupOtp}
+                            disabled={otpSending || !email.includes('@')}
+                            className="email-otp-action-btn"
+                          >
+                            {otpSending ? 'Dispatching OTP...' : 'Send OTP verification code'}
+                          </button>
+                          <span className="email-otp-helper">
+                            Dispatched from <code>info@lichtrecruitmentservices.com</code>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="email-otp-card">
+                          <div className="email-otp-input-row">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={signupOtp}
+                              onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Enter 6-digit OTP"
+                              className="signup-otp-input"
+                              aria-label="6-digit OTP code"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifySignupOtp}
+                              disabled={otpVerifying || signupOtp.length !== 6}
+                              className="btn-pill-green email-otp-confirm-btn"
+                            >
+                              {otpVerifying ? 'Checking...' : 'Verify OTP'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSignupOtp}
+                              disabled={otpCooldown > 0 || otpSending}
+                              className="email-otp-resend-btn"
+                            >
+                              {otpCooldown > 0 ? `${otpCooldown}s` : 'Resend'}
+                            </button>
+                          </div>
+                          {otpNotice && <span className="email-otp-notice-msg">{otpNotice}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                     </label>
                   ))}
                 </div>

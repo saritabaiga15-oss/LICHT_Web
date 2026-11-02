@@ -3,6 +3,7 @@ Disallow: /admin
 Disallow: /profile
 Disallow: /login
 Disallow: /signup
+Disallow: /forgot-password
 Disallow: /employer/login
 Disallow: /employer/register
 
